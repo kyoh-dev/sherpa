@@ -1,44 +1,47 @@
 from dataclasses import dataclass
-from typing import Optional, Any
 
-import questionary
+from tabulate import tabulate
 from psycopg2.extensions import parse_dsn
-from psycopg2.extensions import connection
-from psycopg2 import connect, ProgrammingError, DatabaseError
-
-from .questions import enter_dsn
-from .errors import ExitedError
+from psycopg2.extensions import connection as PgConnection
+from psycopg2 import DatabaseError, ProgrammingError, connect
 
 
 @dataclass
 class PgClient:
     dbname: str
-    user: str
-    password: str
-    host: str
-    port: Optional[str]
-    _dsn: dict[str, Any]
+    conn: PgConnection
+    dsn: dict[str, str]
 
-    def __init__(self) -> None:
-        self._dsn = questionary.prompt([enter_dsn])
-        if not self._dsn:
-            raise ExitedError()
+    def __init__(self, dsn: str) -> None:
+        try:
+            self.dsn = parse_dsn(dsn)
+        except ProgrammingError:
+            exit("sherpa: invalid connection string")
 
         self.dbname = self.dsn["dbname"]
-        self.user = self.dsn["user"]
-        self.password = self.dsn["password"]
-        self.host = self.dsn["host"]
-        self.port = self.dsn.get("port", "5432")
+        self.conn = self.pg_connect()
 
-    def pg_connect(self) -> connection:
+    def pg_connect(self) -> PgConnection:
         try:
-            return connect(self.dsn)
+            print(f"sherpa: attempting to connect to: {self.dbname}")
+            return connect(**self.dsn)
         except DatabaseError:
-            raise ExitedError()
+            exit("sherpa: unable to connect to database")
 
-    @property
-    def dsn(self) -> Any:
-        try:
-            return parse_dsn(self._dsn.get("dsn"))
-        except ProgrammingError:
-            raise ExitedError()
+    def list_tables(self) -> None:
+        with self.conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                  table_schema as schema,
+                  table_name as table
+                FROM information_schema.tables
+                WHERE table_schema NOT IN ('pg_catalog', 'information_schema', 'tiger', 'topology')
+                  AND table_type <> 'VIEW'
+                  AND table_name <> 'spatial_ref_sys'
+                  AND is_insertable_into = 'YES'
+                """
+            )
+            results = cursor.fetchall()
+
+        print(tabulate(results, tablefmt="psql"))
