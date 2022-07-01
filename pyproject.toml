@@ -7,9 +7,14 @@ authors = ["Connor <contact@kyoh.run>"]
 readme = "README.md"
 repository = "https://github.com/kyoh-dev/sherpa"
 
+[tool.poetry.scripts]
+sherpa = "sherpa.main:app"
+
 [tool.poetry.dependencies]
 python = "^3.9"
 psycopg2-binary = "2.9.3"
+typer = {version = "^0.4.1", extras = ["all"]}
+colorama = "^0.4.5"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^0.961"
@@ -18,9 +23,6 @@ black = "^22.6.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.1.2"
-
-[tool.poetry.scripts]
-sherpa = "sherpa.__main__:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
