@@ -29,7 +29,7 @@ def config(
 @check_config
 @app.command(name="list")
 def list_tables(
-        schema: str = Option("public", "--schema", "-s", help="Schema of tables to list")
+    schema: str = Option("public", "--schema", "-s", help="Schema of tables to list")
 ) -> None:
     """
     List tables in a specified schema (default: public)

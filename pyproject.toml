@@ -16,6 +16,7 @@ psycopg2-binary = "2.9.3"
 typer = {version = "^0.4.1", extras = ["all"]}
 colorama = "^0.4.5"
 toml = "^0.10.2"
+Fiona = "^1.8.21"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^0.961"

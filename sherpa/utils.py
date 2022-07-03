@@ -44,6 +44,6 @@ def write_config() -> None:
         default_config = {
             "default": {name: f"{value}" for name, value in parsed_dsn.items()},
         }
-        default_config["default"]["dsn"] = f'{dsn}'
+        default_config["default"]["dsn"] = f"{dsn}"
         with open(CONFIG_FILE, "w") as f:
             toml.dump(default_config, f)

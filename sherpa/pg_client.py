@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from fiona import Collection
 from tabulate import tabulate
 from psycopg2.extensions import parse_dsn
 from psycopg2.extensions import connection as PgConnection
@@ -36,9 +37,15 @@ class PgClient:
                   table_name as table
                 FROM information_schema.tables
                 WHERE table_schema  = %s
+                  AND table_type <> 'VIEW'
                 ORDER BY table_name
-                """, (schema,)
+                """,
+                (schema,),
             )
             results = cursor.fetchall()
 
         print(tabulate(results, headers=["SCHEMA", "TABLE"], tablefmt="psql"))
+        self.conn.close()
+
+    def load(self, collection: Collection, batch_size: int = 1000) -> None:
+        ...
