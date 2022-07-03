@@ -16,19 +16,18 @@ class PgClient:
         try:
             self.dsn = parse_dsn(dsn)
         except ProgrammingError:
-            exit("sherpa: invalid connection string")
+            exit("sherpa: error: invalid connection string")
 
         self.dbname = self.dsn["dbname"]
         self.conn = self.pg_connect()
 
     def pg_connect(self) -> PgConnection:
         try:
-            print(f"sherpa: attempting to connect to: {self.dbname}")
             return connect(**self.dsn)
         except DatabaseError:
-            exit("sherpa: unable to connect to database")
+            exit("sherpa: error: unable to connect to database")
 
-    def list_tables(self) -> None:
+    def list_tables(self, schema: str = "public") -> None:
         with self.conn.cursor() as cursor:
             cursor.execute(
                 """
@@ -36,12 +35,10 @@ class PgClient:
                   table_schema as schema,
                   table_name as table
                 FROM information_schema.tables
-                WHERE table_schema NOT IN ('pg_catalog', 'information_schema', 'tiger', 'topology')
-                  AND table_type <> 'VIEW'
-                  AND table_name <> 'spatial_ref_sys'
-                  AND is_insertable_into = 'YES'
-                """
+                WHERE table_schema  = %s
+                ORDER BY table_name
+                """, (schema,)
             )
             results = cursor.fetchall()
 
-        print(tabulate(results, headers=["SCHEMA", "TABLE"], tablefmt="psql"))
+        print(tabulate(results, tablefmt="psql"))
