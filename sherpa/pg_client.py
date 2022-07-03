@@ -41,4 +41,4 @@ class PgClient:
             )
             results = cursor.fetchall()
 
-        print(tabulate(results, tablefmt="psql"))
+        print(tabulate(results, headers=["SCHEMA", "TABLE"], tablefmt="psql"))
