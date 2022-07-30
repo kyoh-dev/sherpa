@@ -38,6 +38,7 @@ class PgClient:
                 FROM information_schema.tables
                 WHERE table_schema  = %s
                   AND table_type <> 'VIEW'
+                  AND table_name <> 'spatial_ref_sys'
                 ORDER BY table_name
                 """,
                 (schema,),

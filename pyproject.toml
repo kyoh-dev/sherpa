@@ -38,5 +38,5 @@ ignore_missing_imports = true
 show_error_codes = true
 
 [tool.black]
-line-length = 100
+line-length = 120
 target-version = ['py39']
