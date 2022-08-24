@@ -38,7 +38,7 @@ ci = [
 ]
 
 [project.scripts]
-sfn-runner = "sfn_runner.main:main"
+sherpa = "sherpa.main:app"
 
 [tool.mypy]
 strict = true
