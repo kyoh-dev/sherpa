@@ -1,34 +1,44 @@
-[tool.poetry]
-name = "sherpa"
-version = "0.1.0"
-description = "A CLI tool for loading GIS files to a PostGIS database"
-license = "MIT"
-authors = ["Connor <contact@kyoh.run>"]
-readme = "README.md"
-repository = "https://github.com/kyoh-dev/sherpa"
-
-[tool.poetry.scripts]
-sherpa = "sherpa.main:app"
-
-[tool.poetry.dependencies]
-python = "^3.9"
-psycopg2-binary = "2.9.3"
-typer = {version = "^0.4.1", extras = ["all"]}
-colorama = "^0.4.5"
-toml = "^0.10.2"
-Fiona = "^1.8.21"
-
-[tool.poetry.group.dev.dependencies]
-mypy = "^0.961"
-autoflake = "^1.4"
-black = "^22.6.0"
-
-[tool.poetry.group.test.dependencies]
-pytest = "^7.1.2"
-
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "sherpa"
+readme = "README.md"
+authors = [
+    {name = "Connor Keogh", email = "contact@kyoh.run"}
+]
+dynamic = ["version", "description"]
+requires-python = ">=3.6"
+dependencies = [
+    "toml ~= 0.10.2",
+    "typer ~= 0.6.1",
+    "tabulate ~= 0.8.10",
+    "psycopg2-binary ~= 2.9.3",
+    "fiona ~= 1.8.21"
+]
+
+[project.urls]
+Home = "https://github.com/kyoh-dev/sherpa"
+
+[project.optional-dependencies]
+dev = [
+    "flit",
+    "mypy",
+    "autoflake",
+    "black"
+]
+test = [
+    "pytest",
+]
+ci = [
+    "mypy",
+    "autoflake",
+    "black"
+]
+
+[project.scripts]
+sfn-runner = "sfn_runner.main:main"
 
 [tool.mypy]
 strict = true
