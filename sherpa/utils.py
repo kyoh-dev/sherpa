@@ -15,12 +15,11 @@ def check_config(fn: F) -> F:
     """
     Decorator to check whether a config file exists before executing a function.
     """
-
     def check() -> None:
         if CONFIG_FILE.exists():
             fn()
         else:
-            echo("sherpa: error: config does not exist")
+            echo("sherpa: error: config file does not exist")
             exit(1)
 
     return cast(F, check)
