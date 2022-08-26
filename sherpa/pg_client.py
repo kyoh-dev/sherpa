@@ -6,7 +6,7 @@ from typing import Any
 
 import fiona
 from fiona import Collection
-from tabulate import tabulate
+from rich.table import Table
 from psycopg2.sql import SQL, Identifier
 from psycopg2.extensions import parse_dsn
 from psycopg2.extensions import connection as PgConnection
@@ -46,9 +46,7 @@ class PgClient:
         try:
             return connect(**self.dsn)
         except DatabaseError:
-            console.print(
-                f"[bold red]Error:[/bold red] Unable to connect to database \"{self.dbname}\""
-            )
+            console.print(f'[bold red]Error:[/bold red] Unable to connect to database "{self.dbname}"')
             exit(1)
 
     def list_tables(self, schema: str = "public") -> None:
@@ -68,7 +66,13 @@ class PgClient:
             )
             results = cursor.fetchall()
 
-        console.print(tabulate(results, headers=["SCHEMA", "TABLE"], tablefmt="psql"))
+        table = Table()
+        table.add_column("SCHEMA", style="cyan")
+        table.add_column("TABLE")
+        for row in results:
+            table.add_row(row[0], row[1])
+        console.print(table)
+
         self.conn.close()
 
     def get_table_info(self, table: str, schema: str = "public") -> PgTable:
@@ -98,9 +102,7 @@ class PgClient:
         with fiona.open(file, mode="r") as collection:
             fields = collection.schema["properties"].keys()
             if len(fields) > len(table_info.columns):
-                console.print(
-                    "[bold red]Error:[/bold red] Source contains more fields than target columns"
-                )
+                console.print("[bold red]Error:[/bold red] Source contains more fields than target columns")
                 exit(1)
 
             row_generator = generate_rows(collection, table_info)
