@@ -136,4 +136,4 @@ def generate_rows(
             if geometry is None:
                 continue
 
-        yield PgRow(data=(tuple(properties[col] for col in table_info.columns if col != 'geometry') + (geometry,)))
+        yield PgRow(data=(tuple(properties[col] for col in table_info.columns if col != "geometry") + (geometry,)))
