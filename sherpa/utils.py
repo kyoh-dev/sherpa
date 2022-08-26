@@ -4,9 +4,9 @@ from typing import TypeVar, Any, cast
 import toml
 from psycopg2 import ProgrammingError
 from psycopg2.extensions import parse_dsn
-from typer import echo, prompt
+from typer import prompt
 
-from sherpa.constants import CONFIG_FILE
+from sherpa.constants import CONFIG_FILE, console
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -19,7 +19,7 @@ def check_config(fn: F) -> F:
         if CONFIG_FILE.exists():
             fn()
         else:
-            echo("sherpa: error: config file does not exist")
+            console.print("[cyan]sherpa:[/cyan] [bold red]error:[/bold red] config does not exist")
             exit(1)
 
     return cast(F, check)
@@ -29,7 +29,7 @@ def check_config(fn: F) -> F:
 def print_config() -> None:
     current_config = toml.load(CONFIG_FILE)
     for name, value in current_config["default"].items():
-        echo(f"{name} = {value}", color=True)
+        console.print(f"[yellow]{name}[/yellow]=[green]{value}[/green]", highlight=False)
 
 
 def write_config() -> None:
@@ -37,7 +37,7 @@ def write_config() -> None:
     try:
         parsed_dsn = parse_dsn(dsn)
     except ProgrammingError:
-        echo("sherpa: error: invalid connection string")
+        console.print("[cyan]sherpa:[/cyan] [bold red]error:[/bold red] invalid connection string")
         exit(1)
     else:
         default_config = {

@@ -1,7 +1,8 @@
+from pathlib import Path
 from typing import Optional
 
 import toml
-from typer import Option, Typer
+from typer import Typer, Option, Argument
 
 from sherpa.constants import CONFIG_FILE
 from sherpa.utils import print_config, write_config, check_config
@@ -32,7 +33,23 @@ def list_tables(schema: str = Option("public", "--schema", "-s", help="Schema of
     """
     current_config = toml.load(CONFIG_FILE)
     client = PgClient(current_config["default"]["dsn"])
-    client.list_tables()
+    client.list_tables(schema)
+
+
+@app.command()
+@check_config
+def load(
+    file: Path = Argument(..., help="Path to file to load"),
+    table: str = Argument(..., help="Name of table to load to"),
+    schema: str = Option("public", "--schema", "-s", help="Schema of table to load to"),
+    batch_size: int = Option(1000, "--batch-size", "-b", help="Number of records to insert at once"),
+) -> None:
+    """
+    Load a file to a PostGIS table
+    """
+    current_config = toml.load(CONFIG_FILE)
+    client = PgClient(current_config["default"]["dsn"])
+    client.load(file, table, schema, batch_size)
 
 
 @app.callback()
