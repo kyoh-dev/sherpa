@@ -7,7 +7,7 @@ from sherpa.constants import CONFIG_FILE, console
 
 def load_config() -> dict[str, dict[str, str]]:
     if not CONFIG_FILE.exists():
-        console.print("[cyan]sherpa:[/cyan] [bold red]error:[/bold red] config does not exist")
+        console.print("[bold red]Error:[/bold red] Config does not exist")
         exit(1)
 
     return toml.load(CONFIG_FILE)
@@ -20,11 +20,11 @@ def print_config() -> None:
 
 
 def write_config() -> None:
-    dsn = console.input("[cyan]sherpa:[/cyan] [bold]Postgres DSN[/bold]: ")
+    dsn = console.input("[bold]Postgres DSN[/bold]: ")
     try:
         parsed_dsn = parse_dsn(dsn)
     except ProgrammingError:
-        console.print("[cyan]sherpa:[/cyan] [bold red]error:[/bold red] invalid connection string")
+        console.print("[bold red]Error:[/bold red] Invalid connection string")
         exit(1)
     else:
         default_config = {
@@ -33,3 +33,5 @@ def write_config() -> None:
         default_config["default"]["dsn"] = f"{dsn}"
         with open(CONFIG_FILE, "w") as f:
             toml.dump(default_config, f)
+
+        console.print("[green]Config saved![/green]")

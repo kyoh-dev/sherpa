@@ -36,7 +36,7 @@ class PgClient:
         try:
             self.dsn = parse_dsn(dsn)
         except ProgrammingError:
-            console.print("[cyan]sherpa:[/cyan] [bold red]error:[/bold red] invalid connection string")
+            console.print("[bold red]Error:[/bold red] Invalid connection string")
             exit(1)
 
         self.dbname = self.dsn["dbname"]
@@ -47,7 +47,7 @@ class PgClient:
             return connect(**self.dsn)
         except DatabaseError:
             console.print(
-                f"[cyan]sherpa:[/cyan] [bold red]error:[/bold red] unable to connect to database {self.dbname}"
+                f"[bold red]Error:[/bold red] Unable to connect to database \"{self.dbname}\""
             )
             exit(1)
 
@@ -99,7 +99,7 @@ class PgClient:
             fields = collection.schema["properties"].keys()
             if len(fields) > len(table_info.columns):
                 console.print(
-                    "[cyan]sherpa:[/cyan] [bold red]error:[/bold red] source contains more fields than target columns"
+                    "[bold red]Error:[/bold red] Source contains more fields than target columns"
                 )
                 exit(1)
 
