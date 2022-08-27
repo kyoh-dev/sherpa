@@ -49,7 +49,7 @@ class PgClient:
             console.print(f'[bold red]Error:[/bold red] Unable to connect to database "{self.dbname}"')
             exit(1)
 
-    def list_tables(self, schema: str = "public") -> None:
+    def list_tables(self, schema: str = "public") -> Table:
         with self.conn.cursor() as cursor:
             cursor.execute(
                 """
@@ -71,9 +71,9 @@ class PgClient:
         table.add_column("TABLE")
         for row in results:
             table.add_row(row[0], row[1])
-        console.print(table)
 
         self.conn.close()
+        return table
 
     def get_table_info(self, table: str, schema: str = "public") -> PgTable:
         with self.conn.cursor() as cursor:
@@ -89,21 +89,26 @@ class PgClient:
             )
             results = cursor.fetchall()
 
+        self.conn.close()
         return PgTable(name=table, columns=[result for (result,) in results])
 
     def get_table_count(self, schema: str, table: str) -> Optional[int]:
-        with self.conn.cursor() as cursor:
-            try:
-                cursor.execute(SQL(
-                    """
+        try:
+            with self.conn.cursor() as cursor:
+                cursor.execute(
+                    SQL(
+                        """
                     SELECT COUNT(*)
                     FROM {}
                     """
-                ).format(Identifier(schema, table)))
-                return cursor.fetchone()[0]
-            except errors.lookup("42P01"):
-                console.print("[bold red]Error:[/bold red] Undefined table or schema")
-                return None
+                    ).format(Identifier(schema, table))
+                )
+                return int(cursor.fetchone()[0])
+        except errors.lookup("42P01"):
+            console.print("[bold red]Error:[/bold red] Undefined table or schema")
+            return None
+        finally:
+            self.conn.close()
 
     def load(self, file: Path, table: str, schema: str = "public", batch_size: int = 1000) -> None:
         table_info = self.get_table_info(table, schema)

@@ -14,7 +14,8 @@ def get_table_info(schema: str = Option("public", "--schema", "-s", help="Schema
     """
     current_config = load_config()
     client = PgClient(current_config["default"]["dsn"])
-    client.list_tables(schema)
+    table_info = client.list_tables(schema)
+    console.print(table_info)
 
 
 @app.command(name="count")
@@ -32,7 +33,9 @@ def get_table_count(table: str = Argument(..., help="Table to count with optiona
     client = PgClient(current_config["default"]["dsn"])
     count = client.get_table_count(table_ref[0], table_ref[1])
     if count is not None:
-        console.print(f"Table [bold cyan]{table}[/bold cyan] currently holds [bold yellow]{count}[/bold yellow] records")
+        console.print(
+            f"Table [bold cyan]{table}[/bold cyan] currently holds [bold yellow]{count}[/bold yellow] records"
+        )
 
 
 @app.callback()
