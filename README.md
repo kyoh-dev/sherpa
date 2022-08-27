@@ -21,6 +21,7 @@ pip install -e '.[dev,test]'
 
 ### Short-term goals
 
+- [ ] Add info command and sub-commands to get table information
 - [ ] Support specifying CRS transform on load
 - [ ] Support table creation on load
 - [ ] Support listing tables from multiple schemas

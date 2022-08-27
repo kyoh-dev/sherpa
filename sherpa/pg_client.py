@@ -3,16 +3,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from itertools import islice
 from collections.abc import Generator
-from typing import Any
+from typing import Any, Optional
 
 import fiona
 from fiona import Collection
 from rich.table import Table
 from rich.progress import Progress
+from psycopg2 import DatabaseError, ProgrammingError, connect, errors
 from psycopg2.sql import SQL, Identifier, Composed
-from psycopg2.extensions import parse_dsn
-from psycopg2.extensions import connection as PgConnection, cursor as PgCursor
-from psycopg2 import DatabaseError, ProgrammingError, connect
+from psycopg2.extensions import parse_dsn, connection as PgConnection, cursor as PgCursor
 
 from sherpa.constants import console
 
@@ -92,6 +91,20 @@ class PgClient:
 
         return PgTable(name=table, columns=[result for (result,) in results])
 
+    def get_table_count(self, schema: str, table: str) -> Optional[int]:
+        with self.conn.cursor() as cursor:
+            try:
+                cursor.execute(SQL(
+                    """
+                    SELECT COUNT(*)
+                    FROM {}
+                    """
+                ).format(Identifier(schema, table)))
+                return cursor.fetchone()[0]
+            except errors.lookup("42P01"):
+                console.print("[bold red]Error:[/bold red] Undefined table or schema")
+                return None
+
     def load(self, file: Path, table: str, schema: str = "public", batch_size: int = 1000) -> None:
         table_info = self.get_table_info(table, schema)
         if not file.exists():
@@ -126,7 +139,7 @@ class PgClient:
                         self.conn.commit()
                         progress.update(load_task, advance=len(batch))
 
-            console.log(
+            console.print(
                 f"[green]Successfully loaded [/green][bold yellow]{inserted}[/bold yellow] [green]records[/green]"
             )
 

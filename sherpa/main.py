@@ -6,8 +6,10 @@ from typer import Typer, Option, Argument
 from sherpa.constants import CONFIG_FILE
 from sherpa.cmd_utils import load_config, print_config, write_config
 from sherpa.pg_client import PgClient
+from sherpa.cmd_groups import info
 
 app = Typer(name="sherpa")
+app.add_typer(info.app)
 
 
 @app.command()
@@ -22,16 +24,6 @@ def config(list_all: Optional[bool] = Option(False, "--list", "-l", help="List a
             CONFIG_FILE.parent.mkdir(exist_ok=True)
 
         write_config()
-
-
-@app.command(name="list")
-def list_tables(schema: str = Option("public", "--schema", "-s", help="Schema of tables to list")) -> None:
-    """
-    List tables in a specified schema (default: public)
-    """
-    current_config = load_config()
-    client = PgClient(current_config["default"]["dsn"])
-    client.list_tables(schema)
 
 
 @app.command()
