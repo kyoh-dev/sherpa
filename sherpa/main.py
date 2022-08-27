@@ -4,7 +4,7 @@ from typing import Optional
 from typer import Typer, Option, Argument
 
 from sherpa.constants import CONFIG_FILE
-from sherpa.utils import load_config, print_config, write_config
+from sherpa.cmd_utils import load_config, print_config, write_config
 from sherpa.pg_client import PgClient
 
 app = Typer(name="sherpa")

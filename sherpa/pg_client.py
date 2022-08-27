@@ -1,15 +1,17 @@
-from collections.abc import Generator
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from itertools import islice
+from collections.abc import Generator
 from typing import Any
 
 import fiona
 from fiona import Collection
 from rich.table import Table
-from psycopg2.sql import SQL, Identifier
+from rich.progress import Progress
+from psycopg2.sql import SQL, Identifier, Composed
 from psycopg2.extensions import parse_dsn
-from psycopg2.extensions import connection as PgConnection
+from psycopg2.extensions import connection as PgConnection, cursor as PgCursor
 from psycopg2 import DatabaseError, ProgrammingError, connect
 
 from sherpa.constants import console
@@ -20,10 +22,9 @@ class PgTable:
     name: str
     columns: list[str]
 
-
-@dataclass
-class PgRow:
-    data: tuple[Any, ...]
+    @property
+    def composed_columns(self) -> Composed:
+        return SQL(", ").join(Identifier(x) for x in self.columns)
 
 
 @dataclass
@@ -83,53 +84,58 @@ class PgClient:
                 FROM information_schema.columns
                 WHERE table_schema = %s
                   AND table_name = %s
-                ORDER BY column_name
+                  AND column_name <> %s
                 """,
-                (schema, table),
+                (schema, table, "id"),
             )
             results = cursor.fetchall()
 
         return PgTable(name=table, columns=[result for (result,) in results])
 
-    def load(
-        self,
-        file: Path,
-        table: str,
-        schema: str = "public",
-        batch_size: int = 1000,
-    ) -> None:
+    def load(self, file: Path, table: str, schema: str = "public", batch_size: int = 1000) -> None:
         table_info = self.get_table_info(table, schema)
+        if not file.exists():
+            console.print(f"[bold red]Error:[/bold red] File not found: {file}")
+            exit(1)
+
         with fiona.open(file, mode="r") as collection:
             fields = collection.schema["properties"].keys()
             if len(fields) > len(table_info.columns):
                 console.print("[bold red]Error:[/bold red] Source contains more fields than target columns")
                 exit(1)
 
-            row_generator = generate_rows(collection, table_info)
+            row_generator = generate_row_data(collection, table_info)
 
-            finished = False
-            while not finished:
-                batch = islice(row_generator, 0, batch_size)
-                if batch:
-                    insert_cursor = self.conn.cursor()
-                    transforms = ["%s"] * len(table_info.columns)
-                    args = SQL(",").join(insert_cursor.mogrify(",".join(transforms), x) for x in list(batch))
-                    statement = SQL(
-                        """
-                        INSERT INTO {}({})
-                        VALUES ({})
-                        """
-                    ).format(Identifier(schema, table), SQL(",").join(Identifier(x) for x in table_info.columns), args)
-                    insert_cursor.execute(statement)
-                    console.log(f"Loaded {batch_size} rows")
-                else:
-                    finished = True
-                    console.log(f"Finished loading")
+            inserted = 0
+            with Progress() as progress:
+                load_task = progress.add_task(f"[cyan]Loading...[/cyan]", total=len(collection))
+                while not progress.finished:
+                    batch = list(islice(row_generator, 0, batch_size))
+                    if batch:
+                        insert_cursor = self.conn.cursor()
+                        args_list = [generate_sql_insert_row(table_info, x, insert_cursor) for x in batch]
+                        statement = SQL(
+                            """
+                            INSERT INTO {}({})
+                            VALUES {}
+                            RETURNING id;
+                            """
+                        ).format(Identifier(schema, table), table_info.composed_columns, SQL(",").join(args_list))
+                        insert_cursor.execute(statement)
+                        inserted += len(insert_cursor.fetchall())
+                        self.conn.commit()
+                        progress.update(load_task, advance=len(batch))
+
+            console.log(
+                f"[green]Successfully loaded [/green][bold yellow]{inserted}[/bold yellow] [green]records[/green]"
+            )
+
+        self.conn.close()
 
 
-def generate_rows(
+def generate_row_data(
     collection: Collection, table_info: PgTable, skip_empty_geoms: bool = True
-) -> Generator[PgRow, None, None]:
+) -> Generator[tuple[Any, ...], None, None]:
     for record in collection:
         properties = record["properties"]
         geometry = record["geometry"]
@@ -138,4 +144,15 @@ def generate_rows(
             if geometry is None:
                 continue
 
-        yield PgRow(data=(tuple(properties[col] for col in table_info.columns if col != "geometry") + (geometry,)))
+        yield tuple(properties[col] for col in table_info.columns if col != "geometry") + (json.dumps(geometry),)
+
+
+def generate_sql_transforms(table_info: PgTable) -> list[str]:
+    sql_transforms = ["%s" if x != "geometry" else "ST_GeomFromGeoJSON(%s)" for x in table_info.columns]
+    return sql_transforms
+
+
+def generate_sql_insert_row(table_info: PgTable, row_data: tuple[Any, ...], cursor: PgCursor) -> Composed:
+    return SQL("({})").format(
+        SQL(cursor.mogrify(",".join(generate_sql_transforms(table_info)), row_data).decode("utf-8"))
+    )

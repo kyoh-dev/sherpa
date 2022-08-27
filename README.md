@@ -9,11 +9,6 @@ Installation requires an up-to-date version of `pip`:
 pip install -U pip
 ```
 
-For a regular installation:
-```shell
-
-```
-
 For development, clone the repository and install with extra dev/test dependencies:
 ```shell
 git clone ...
@@ -21,3 +16,17 @@ cd sherpa
 
 pip install -e '.[dev,test]'
 ```
+
+## TODO
+
+### Short-term goals
+
+- [ ] Support specifying CRS transform on load
+- [ ] Support table creation on load
+- [ ] Support listing tables from multiple schemas
+- [ ] Option to truncate table before loading
+
+### Long-term goals
+
+- [ ] Support loading to SpatiaLite
+- [ ] Support reading and loading different layers of a file
