@@ -9,9 +9,16 @@ Installation requires an up-to-date version of `pip`:
 pip install -U pip
 ```
 
-For development, clone the repository and install with extra dev/test dependencies:
+## Usage
+
+...
+
+## Development
+
+For a development install, clone the repository and install with extra dev/test dependencies:
 ```shell
-git clone ...
+git clone https://github.com/kyoh-dev/sherpa.git
+
 cd sherpa
 
 pip install -e '.[dev,test]'
