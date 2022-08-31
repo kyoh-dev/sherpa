@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import toml
 from psycopg2 import ProgrammingError
 from psycopg2.extensions import parse_dsn
@@ -5,16 +7,16 @@ from psycopg2.extensions import parse_dsn
 from sherpa.constants import CONFIG_FILE, console
 
 
-def load_config() -> dict[str, dict[str, str]]:
-    if not CONFIG_FILE.exists():
+def load_config(file: Path) -> dict[str, dict[str, str]]:
+    if not file.exists():
         console.print("[bold red]Error:[/bold red] Config does not exist")
         exit(1)
 
-    return toml.load(CONFIG_FILE)
+    return toml.load(file)
 
 
-def print_config() -> None:
-    current_config = load_config()
+def print_config(file: Path) -> None:
+    current_config = load_config(file)
     for name, value in current_config["default"].items():
         console.print(f"[yellow]{name}[/yellow]=[green]{value}[/green]", highlight=False)
 

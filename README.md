@@ -9,6 +9,8 @@ Installation requires an up-to-date version of `pip`:
 pip install -U pip
 ```
 
+...
+
 ## Usage
 
 ...

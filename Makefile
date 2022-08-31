@@ -1,4 +1,10 @@
-.PHONY: lint-check lint-fix
+export DOCKER_BUILDKIT	:=	1
+
+.PHONY: test lint-check lint-fix
+
+test:
+	docker build -f Dockerfile.tests -t sherpa-test .
+	docker run sherpa-test
 
 lint-check:
 	black --check --diff sherpa

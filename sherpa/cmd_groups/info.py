@@ -1,6 +1,6 @@
 from typer import Typer, Option, Argument
 
-from sherpa.constants import console
+from sherpa.constants import console, CONFIG_FILE
 from sherpa.cmd_utils import load_config
 from sherpa.pg_client import PgClient
 
@@ -12,7 +12,7 @@ def get_table_info(schema: str = Option("public", "--schema", "-s", help="Schema
     """
     List tables in a specified schema (default: public)
     """
-    current_config = load_config()
+    current_config = load_config(CONFIG_FILE)
     client = PgClient(current_config["default"]["dsn"])
     table_info = client.list_tables(schema)
     console.print(table_info)
@@ -29,7 +29,7 @@ def get_table_count(table: str = Argument(..., help="Table to count with optiona
     if len(table_ref) == 1:
         table_ref.insert(0, "public")
 
-    current_config = load_config()
+    current_config = load_config(CONFIG_FILE)
     client = PgClient(current_config["default"]["dsn"])
     count = client.get_table_count(table_ref[0], table_ref[1])
     if count is not None:
