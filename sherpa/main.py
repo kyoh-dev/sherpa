@@ -42,7 +42,7 @@ def load(
     Load a file to a PostGIS table
     """
     current_config = load_config(CONFIG_FILE)
-    client = PgClient(current_config["default"]["dsn"])
+    client = PgClient(current_config["default"])
     client.load(file, table, schema)
 
 

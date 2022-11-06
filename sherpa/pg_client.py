@@ -28,25 +28,13 @@ class PgTable:
 
 @dataclass
 class PgClient:
-    dbname: str
     conn: PgConnection
-    dsn: dict[str, str]
 
-    def __init__(self, dsn: str) -> None:
+    def __init__(self, connection_details: dict[str, str]) -> None:
         try:
-            self.dsn = parse_dsn(dsn)
-        except ProgrammingError:
-            console.print("[bold red]Error:[/bold red] Invalid connection string")
-            exit(1)
-
-        self.dbname = self.dsn["dbname"]
-        self.conn = self.pg_connect()
-
-    def pg_connect(self) -> PgConnection:
-        try:
-            return connect(**self.dsn)
+            self.conn = connect(**connection_details)
         except DatabaseError:
-            console.print(f'[bold red]Error:[/bold red] Unable to connect to database "{self.dbname}"')
+            console.print(f"[bold red]Error:[/bold red] Unable to connect to database `{connection_details['dbname']}`")
             exit(1)
 
     def list_tables(self, schema: str = "public") -> Table:
@@ -89,7 +77,6 @@ class PgClient:
             )
             results = cursor.fetchall()
 
-        self.conn.close()
         return PgTable(name=table, columns=[result for (result,) in results])
 
     def get_table_count(self, schema: str, table: str) -> Optional[int]:
@@ -110,18 +97,13 @@ class PgClient:
         finally:
             self.conn.close()
 
-    def load(self, file: Path, table: str, schema: str = "public", batch_size: int = 1000) -> None:
+    def load(self, file: Path, table: str, schema: str = "public", batch_size: int = 10000) -> None:
         table_info = self.get_table_info(table, schema)
         if not file.exists():
             console.print(f"[bold red]Error:[/bold red] File not found: {file}")
             exit(1)
 
         with fiona.open(file, mode="r") as collection:
-            fields = collection.schema["properties"].keys()
-            if len(fields) > len(table_info.columns):
-                console.print("[bold red]Error:[/bold red] Source contains more fields than target columns")
-                exit(1)
-
             row_generator = generate_row_data(collection, table_info)
 
             inserted = 0
@@ -151,16 +133,10 @@ class PgClient:
         self.conn.close()
 
 
-def generate_row_data(
-    collection: Collection, table_info: PgTable, skip_empty_geoms: bool = True
-) -> Generator[tuple[Any, ...], None, None]:
+def generate_row_data(collection: Collection, table_info: PgTable) -> Generator[tuple[Any, ...], None, None]:
     for record in collection:
         properties = record["properties"]
         geometry = record["geometry"]
-
-        if skip_empty_geoms:
-            if geometry is None:
-                continue
 
         yield tuple(properties[col] for col in table_info.columns if col != "geometry") + (json.dumps(geometry),)
 
