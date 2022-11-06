@@ -34,7 +34,9 @@ class PgClient:
         try:
             self.conn = connect(**connection_details)
         except DatabaseError:
-            console.print(f"[bold red]Error:[/bold red] Unable to connect to database [bold cyan]{connection_details['dbname']}[/bold cyan]")
+            console.print(
+                f"[bold red]Error:[/bold red] Unable to connect to database [bold cyan]{connection_details['dbname']}[/bold cyan]"
+            )
             exit(1)
 
     def close(self) -> None:
@@ -83,12 +85,16 @@ class PgClient:
             results = cursor.fetchall()
 
         if len(results) == 0:
-            console.print(f"[bold red]Error:[/bold red] unable to get table structure for [bold cyan]{schema}.{table}[/bold cyan]")
+            console.print(
+                f"[bold red]Error:[/bold red] unable to get table structure for [bold cyan]{schema}.{table}[/bold cyan]"
+            )
             exit(1)
 
         return PgTable(name=table, columns=[result for (result,) in results])
 
-    def load(self, file: Path, table: str, schema: str = "public", create_table: bool = False, batch_size: int = 10000) -> None:
+    def load(
+        self, file: Path, table: str, schema: str = "public", create_table: bool = False, batch_size: int = 10000
+    ) -> None:
         if not table and create_table is False:
             console.print("[bold red]Error:[/bold red] you must provide a table name or the --create option")
             exit(1)

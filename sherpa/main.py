@@ -47,7 +47,9 @@ def load(
     file: Path = Argument(..., help="Path to file to load"),
     table: str = Option("", "--table", "-t", help="Name of table to load to"),
     schema: str = Option("public", "--schema", "-s", help="Schema of table to load to"),
-    create_table: bool = Option(False, "--create", "-c", help="Creates a table inferring the schema from the load file")
+    create_table: bool = Option(
+        False, "--create", "-c", help="Creates a table inferring the schema from the load file"
+    ),
 ) -> None:
     """
     Load a file to a PostGIS table
