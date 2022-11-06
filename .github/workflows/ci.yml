@@ -1,0 +1,24 @@
+name: CI sherpa
+on: [push]
+
+jobs:
+  lint-and-test:
+    name: 'Lint and test sherpa'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install '.[ci,test]'
+
+      - name: Run lint check
+        run: make lint-check
+
+      - name: Run unit tests
+        run: make test
