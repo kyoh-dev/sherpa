@@ -13,7 +13,7 @@ def get_table_info(schema: str = Option("public", "--schema", "-s", help="Schema
     List tables in a specified schema (default: public)
     """
     current_config = load_config(CONFIG_FILE)
-    client = PgClient(current_config["default"]["dsn"])
+    client = PgClient(current_config["default"])
     table_info = client.list_tables(schema)
     console.print(table_info)
 
@@ -30,7 +30,7 @@ def get_table_count(table: str = Argument(..., help="Table to count with optiona
         table_ref.insert(0, "public")
 
     current_config = load_config(CONFIG_FILE)
-    client = PgClient(current_config["default"]["dsn"])
+    client = PgClient(current_config["default"])
     count = client.get_table_count(table_ref[0], table_ref[1])
     if count is not None:
         console.print(

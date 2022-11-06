@@ -30,9 +30,10 @@ pip install -e '.[dev,test]'
 
 ### Project goals
 
-- [ ] Manage DSN(s) through a stored config file
-- [ ] Support loading a GIS file to a PostGIS instance
+- [x] Use DSN(s) through a stored config file
+- [x] Support loading a GIS file to a PostGIS instance
 - [ ] Support specifying CRS transform on load
 - [ ] Support table creation on load
 - [ ] Support listing tables in schema with record counts
 - [ ] Support truncating a table before loading
+- [ ] Support using and managing multiple DSNs
