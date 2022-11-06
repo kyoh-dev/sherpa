@@ -1,46 +1,59 @@
 import pytest
 from psycopg2 import connect
 from psycopg2.sql import SQL, Identifier
+from rich.table import Table
 
 from sherpa.pg_client import PgClient
+from tests.constants import TEST_TABLE
 
 
-def truncate_tables(conn_details):
-    conn = connect(**conn_details)
+def truncate_tables(config):
+    conn = connect(**config)
     with conn:
         with conn.cursor() as cursor:
-            for table in ("geojson_test",):
-                cursor.execute(SQL("TRUNCATE TABLE {} CASCADE").format(Identifier(table)))
+            cursor.execute(SQL("TRUNCATE TABLE {} CASCADE").format(Identifier(TEST_TABLE)))
     conn.close()
 
 
 @pytest.fixture
 def pg_connection(default_config):
-    conn_details = default_config["default"]
-    conn = connect(**conn_details)
+    conn = connect(**default_config["default"])
     yield conn
     conn.close()
     # If a SQL transaction is aborted, all subsequent SQL commands will be ignored
     # so reopening the connection to drop test data is necessary
-    truncate_tables(conn_details)
+    truncate_tables(default_config["default"])
 
 
 @pytest.fixture
 def pg_client(default_config):
     yield PgClient(default_config["default"])
+    truncate_tables(default_config["default"])
 
 
-def test_pg_client_load_geojson_success(pg_client, geojson_file, pg_connection):
-    pg_client.load(geojson_file, "geojson_test")
+@pytest.fixture
+def rich_table():
+    table = Table("SCHEMA", "TABLE", "ROWS")
+    yield table
+
+
+@pytest.mark.parametrize(
+    "file", [
+        pytest.param("geojson_file", id="geojson"),
+        pytest.param("gpkg_file", id='gpkg')
+    ]
+)
+def test_load_success(request, pg_client, pg_connection, file):
+    pg_client.load(request.getfixturevalue(file), TEST_TABLE)
     with pg_connection.cursor() as cursor:
-        cursor.execute(
+        cursor.execute(SQL(
             """
             SELECT
               polygon_id,
               geometry
-            FROM public.geojson_test
+            FROM public.{}
             """
-        )
+        ).format(Identifier(TEST_TABLE)))
         results = cursor.fetchall()
 
     assert results == [
@@ -49,3 +62,12 @@ def test_pg_client_load_geojson_success(pg_client, geojson_file, pg_connection):
         ("DEF456", "0103000020E61000000100000004000000D1FEAC9EF8946240E2B9ADE3AEA941C09BBA3CE7389562408FF4B3A217A941C09BBA3CE73895624072B0EDA309AA41C0D1FEAC9EF8946240E2B9ADE3AEA941C0"),
         ("GHI789", "0103000020E6100000010000000400000090F06206CF9462405B83520F2CA741C095511B8B1C956240D81E076F59A741C0A3CFA2D2E3946240A026E9503CA841C090F06206CF9462405B83520F2CA741C0")
     ]
+
+
+def test_list_table_counts_no_data(pg_client, rich_table):
+    table = pg_client.list_table_counts()
+    rich_table.add_row("public", TEST_TABLE, "0")
+
+    assert table.row_count == rich_table.row_count
+    assert table.columns == rich_table.columns
+    assert table.rows == rich_table.rows

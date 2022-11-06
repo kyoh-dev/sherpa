@@ -1,21 +1,15 @@
 import pytest
-import fiona
 
 from typer.testing import CliRunner
 
 from sherpa import main
+from tests.constants import TEST_TABLE
 
 
 @pytest.fixture
 def runner(monkeypatch, config_file):
     monkeypatch.setattr(main, "CONFIG_FILE", config_file)
     yield CliRunner()
-
-
-def test_geojson_file_fixture(geojson_file, geometry_records):
-    with fiona.open(geojson_file) as collection:
-        assert collection.crs == {'init': 'epsg:4326'}
-        assert len(list(collection.values())) == len(geometry_records)
 
 
 def test_cmd_config_list_all(runner, default_config):
@@ -35,3 +29,16 @@ def test_cmd_config_invalid_dsn(runner):
     result = runner.invoke(main.app, ["config"], input="wrongdb://test:test@sherpadb:5432/sherpa-test\n")
     assert result.exit_code == 1
     assert "Error: Invalid connection string" in result.stdout
+
+
+def test_cmd_list_tables_default_schema(runner):
+    result = runner.invoke(main.app, ["tables"])
+    expected_output = {
+        "SCHEMA": "public",
+        "TABLE": TEST_TABLE,
+        "ROWS": "0"
+    }
+    assert result.exit_code == 0
+    for col_header, col_value in expected_output.items():
+        assert col_header in result.stdout
+        assert col_value in result.stdout

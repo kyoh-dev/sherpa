@@ -39,6 +39,7 @@ def list_tables(schema: str = Option("public", "--schema", "-s", help="Schema of
     client = PgClient(current_config["default"])
     table_info = client.list_table_counts(schema)
     console.print(table_info)
+    client.close()
 
 
 @app.command()
@@ -53,6 +54,7 @@ def load(
     current_config = load_config(CONFIG_FILE)
     client = PgClient(current_config["default"])
     client.load(file, table, schema)
+    client.close()
 
 
 @app.callback()
