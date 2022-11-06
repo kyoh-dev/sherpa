@@ -45,15 +45,16 @@ def list_tables(schema: str = Option("public", "--schema", "-s", help="Schema of
 @app.command()
 def load(
     file: Path = Argument(..., help="Path to file to load"),
-    table: str = Argument(..., help="Name of table to load to"),
+    table: str = Option("", "--table", "-t", help="Name of table to load to"),
     schema: str = Option("public", "--schema", "-s", help="Schema of table to load to"),
+    create_table: bool = Option(False, "--create", "-c", help="Creates a table inferring the schema from the load file")
 ) -> None:
     """
     Load a file to a PostGIS table
     """
     current_config = load_config(CONFIG_FILE)
     client = PgClient(current_config["default"])
-    client.load(file, table, schema)
+    client.load(file, table, schema, create_table)
     client.close()
 
 

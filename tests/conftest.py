@@ -2,6 +2,15 @@ import pytest
 import toml
 import fiona
 
+from sherpa.pg_client import PgClient
+from tests.utils import truncate_tables
+
+
+@pytest.fixture
+def pg_client(default_config):
+    yield PgClient(default_config["default"])
+    truncate_tables(default_config["default"])
+
 
 @pytest.fixture
 def default_config():

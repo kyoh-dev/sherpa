@@ -5,12 +5,14 @@ from typer.testing import CliRunner
 
 from sherpa import main
 from tests.constants import TEST_TABLE
+from tests.utils import truncate_tables
 
 
 @pytest.fixture
-def runner(monkeypatch, config_file):
+def runner(monkeypatch, config_file, default_config):
     monkeypatch.setattr(main, "CONFIG_FILE", config_file)
     yield CliRunner()
+    truncate_tables(default_config["default"])
 
 
 def test_cmd_config_list_all(runner, default_config):
@@ -52,19 +54,25 @@ def test_cmd_list_tables_unknown_schema(runner):
 
 
 def test_cmd_load_success(runner, geojson_file):
-    result = runner.invoke(main.app, ["load", str(geojson_file), TEST_TABLE])
+    result = runner.invoke(main.app, ["load", "--table", TEST_TABLE, str(geojson_file)])
+    print(result.stdout)
     assert result.exit_code == 0
-    assert "Successfully loaded 4 records" in result.stdout
+    assert f"Success: loaded 4 records to public.{TEST_TABLE}" in result.stdout
 
 
 def test_cmd_load_file_not_found(runner):
     filepath = Path("test_file.geojson")
-    result = runner.invoke(main.app, ["load", str(filepath), TEST_TABLE])
+    result = runner.invoke(main.app, ["load", "--table", TEST_TABLE, str(filepath)])
     assert result.exit_code == 1
     assert "Error: File not found: test_file.geojson" in result.stdout
 
 
 def test_cmd_load_unknown_table(runner, geojson_file):
-    result = runner.invoke(main.app, ["load", str(geojson_file), "monkeys_in_space"])
+    result = runner.invoke(main.app, ["load", "--table", "monkeys_in_space", str(geojson_file)])
     assert result.exit_code == 1
-    assert "Error: unable to get table structure for `public.monkeys_in_space`" in result.stdout
+    assert "Error: unable to get table structure for public.monkeys_in_space" in result.stdout
+
+
+def test_cmd_load_create_table(runner, geojson_file):
+    result = runner.invoke(main.app, ["load", "--create", str(geojson_file)])
+    assert result.exit_code == 0

@@ -34,7 +34,7 @@ class PgClient:
         try:
             self.conn = connect(**connection_details)
         except DatabaseError:
-            console.print(f"[bold red]Error:[/bold red] Unable to connect to database `{connection_details['dbname']}`")
+            console.print(f"[bold red]Error:[/bold red] Unable to connect to database [bold cyan]{connection_details['dbname']}[/bold cyan]")
             exit(1)
 
     def close(self) -> None:
@@ -83,12 +83,18 @@ class PgClient:
             results = cursor.fetchall()
 
         if len(results) == 0:
-            console.print(f"[bold red]Error:[/bold red] unable to get table structure for `{schema}.{table}`")
+            console.print(f"[bold red]Error:[/bold red] unable to get table structure for [bold cyan]{schema}.{table}[/bold cyan]")
             exit(1)
 
         return PgTable(name=table, columns=[result for (result,) in results])
 
-    def load(self, file: Path, table: str, schema: str = "public", batch_size: int = 10000) -> None:
+    def load(self, file: Path, table: str, schema: str = "public", create_table: bool = False, batch_size: int = 10000) -> None:
+        if not table and create_table is False:
+            console.print("[bold red]Error:[/bold red] you must provide a table name or the --create option")
+            exit(1)
+        elif create_table:
+            table = self.create_table_from_file(file, schema)
+
         table_info = self.get_table_structure(table, schema)
         if not file.exists():
             console.print(f"[bold red]Error:[/bold red] File not found: {file}")
@@ -118,8 +124,31 @@ class PgClient:
                         progress.update(load_task, advance=len(batch))
 
             console.print(
-                f"[green]Successfully loaded [/green][bold yellow]{inserted}[/bold yellow] [green]records[/green]"
+                f"[green]Success:[/green] loaded [bold yellow]{inserted}[/bold yellow] records to [bold cyan]{schema}.{table}[/bold cyan]"
             )
+
+    def create_table_from_file(self, file: Path, schema: str) -> str:
+        with fiona.open(file, mode="r") as collection:
+            columns = collection.schema["properties"]
+
+        table_name = file.name.removesuffix(file.suffix)
+        columns = [SQL("{} TEXT").format(Identifier(col)) for col in columns.keys()]
+        q = SQL(
+            """
+            CREATE TABLE {table_name} (
+                id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+                {columns},
+                geometry GEOMETRY
+            )
+            """
+        ).format(table_name=Identifier(schema, table_name), columns=SQL(", ").join(columns))
+
+        with self.conn:
+            with self.conn.cursor() as cursor:
+                cursor.execute(q)
+
+        console.print(f"[green]Success:[/green] Created table [bold cyan]{schema}.{table_name}[/bold cyan]")
+        return table_name
 
 
 def generate_row_data(collection: Collection, table_info: PgTable) -> Generator[tuple[Any, ...], None, None]:
