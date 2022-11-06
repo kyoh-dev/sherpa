@@ -21,22 +21,22 @@ pip install git+https://github.com/kyoh-dev/sherpa.git#egg=sherpa
 ## Usage
 
 ```shell
-$ sherpa --help
-                                                                                                                                                                                                            
- Usage: sherpa [OPTIONS] COMMAND [ARGS]...                                                                                                                                                                  
-                                                                                                                                                                                                            
- A CLI tool for loading GIS files to a PostGIS database.                                                                                                                                                    
-                                                                                                                                                                                                            
-╭─ Options ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --install-completion        [bash|zsh|fish|powershell|pwsh]  Install completion for the specified shell. [default: None]                                                                                 │
-│ --show-completion           [bash|zsh|fish|powershell|pwsh]  Show completion for the specified shell, to copy it or customize the installation. [default: None]                                          │
-│ --help                                                       Show this message and exit.                                                                                                                 │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Commands ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ config                             Get and set configuration options                                                                                                                                     │
-│ info                               Get info about your PostGIS tables                                                                                                                                    │
-│ load                               Load a file to a PostGIS table                                                                                                                                        │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+$ sherpa --help                                                                                                                                                                                                                              [17:56:44]
+                                                                                                                                                                                                                                                        
+ Usage: sherpa [OPTIONS] COMMAND [ARGS]...                                                                                                                                                                                                              
+                                                                                                                                                                                                                                                        
+ A CLI tool for loading GIS files to a PostGIS database.                                                                                                                                                                                                
+                                                                                                                                                                                                                                                        
+╭─ Options ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --install-completion        [bash|zsh|fish|powershell|pwsh]  Install completion for the specified shell. [default: None]                                                                                                                             │
+│ --show-completion           [bash|zsh|fish|powershell|pwsh]  Show completion for the specified shell, to copy it or customize the installation. [default: None]                                                                                      │
+│ --help                                                       Show this message and exit.                                                                                                                                                             │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ config                        Get and set configuration options                                                                                                                                                                                      │
+│ load                          Load a file to a PostGIS table                                                                                                                                                                                         │
+│ tables                        List tables in a specified schema (default: public)                                                                                                                                                                    │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
 ```
 
