@@ -58,6 +58,10 @@ class PgClient:
             )
             results = cursor.fetchall()
 
+        if len(results) == 0:
+            console.print("[bold red]Error:[/bold red] schema not found")
+            exit(1)
+
         table = Table("SCHEMA", "TABLE", "ROWS", style="cyan")
         for row in results:
             table.add_row(row[0], row[1], str(row[2]))
