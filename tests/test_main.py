@@ -57,9 +57,3 @@ def test_cmd_config_invalid_dsn(runner):
     result = runner.invoke(main.app, ["config"], input="wrongdb://test:test@sherpadb:5432/sherpa-test\n")
     assert result.exit_code == 1
     assert "Error: Invalid connection string" in result.stdout
-
-
-def test_cmd_load_success(runner, geojson_file):
-    result = runner.invoke(main.app, ["load", str(geojson_file), "geojson_test"])
-    print(result.stdout)
-    assert result.exit_code == 0
