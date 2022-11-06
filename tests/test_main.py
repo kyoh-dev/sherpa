@@ -1,5 +1,6 @@
-import pytest
+from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from sherpa import main
@@ -48,3 +49,22 @@ def test_cmd_list_tables_unknown_schema(runner):
     result = runner.invoke(main.app, ["tables", "--schema", "monkeys_in_space"])
     assert result.exit_code == 1
     assert "Error: schema not found" in result.stdout
+
+
+def test_cmd_load_success(runner, geojson_file):
+    result = runner.invoke(main.app, ["load", str(geojson_file), TEST_TABLE])
+    assert result.exit_code == 0
+    assert "Successfully loaded 4 records" in result.stdout
+
+
+def test_cmd_load_file_not_found(runner):
+    filepath = Path("test_file.geojson")
+    result = runner.invoke(main.app, ["load", str(filepath), TEST_TABLE])
+    assert result.exit_code == 1
+    assert "Error: File not found: test_file.geojson" in result.stdout
+
+
+def test_cmd_load_unknown_table(runner, geojson_file):
+    result = runner.invoke(main.app, ["load", str(geojson_file), "monkeys_in_space"])
+    assert result.exit_code == 1
+    assert "Error: unable to get table structure for `public.monkeys_in_space`" in result.stdout

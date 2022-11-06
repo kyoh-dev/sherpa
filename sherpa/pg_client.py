@@ -82,6 +82,10 @@ class PgClient:
             )
             results = cursor.fetchall()
 
+        if len(results) == 0:
+            console.print(f"[bold red]Error:[/bold red] unable to get table structure for `{schema}.{table}`")
+            exit(1)
+
         return PgTable(name=table, columns=[result for (result,) in results])
 
     def load(self, file: Path, table: str, schema: str = "public", batch_size: int = 10000) -> None:
