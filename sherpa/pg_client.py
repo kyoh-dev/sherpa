@@ -3,15 +3,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from itertools import islice
 from collections.abc import Generator
-from typing import Any, Optional
+from typing import Any
 
 import fiona
 from fiona import Collection
 from rich.table import Table
 from rich.progress import Progress
-from psycopg2 import DatabaseError, ProgrammingError, connect, errors
+from psycopg2 import DatabaseError, connect
 from psycopg2.sql import SQL, Identifier, Composed
-from psycopg2.extensions import parse_dsn, connection as PgConnection, cursor as PgCursor
+from psycopg2.extensions import connection as PgConnection, cursor as PgCursor
 
 from sherpa.constants import console
 
@@ -37,7 +37,7 @@ class PgClient:
             console.print(f"[bold red]Error:[/bold red] Unable to connect to database `{connection_details['dbname']}`")
             exit(1)
 
-    def list_tables(self, schema: str = "public") -> Table:
+    def list_table_counts(self, schema: str = "public") -> Table:
         with self.conn.cursor() as cursor:
             cursor.execute(
                 """
@@ -60,7 +60,7 @@ class PgClient:
 
         return table
 
-    def get_table_info(self, table: str, schema: str = "public") -> PgTable:
+    def get_table_structure(self, table: str, schema: str = "public") -> PgTable:
         with self.conn.cursor() as cursor:
             cursor.execute(
                 """
@@ -76,26 +76,8 @@ class PgClient:
 
         return PgTable(name=table, columns=[result for (result,) in results])
 
-    def get_table_count(self, schema: str, table: str) -> Optional[int]:
-        try:
-            with self.conn.cursor() as cursor:
-                cursor.execute(
-                    SQL(
-                        """
-                    SELECT COUNT(*)
-                    FROM {}
-                    """
-                    ).format(Identifier(schema, table))
-                )
-                return int(cursor.fetchone()[0])
-        except errors.lookup("42P01"):
-            console.print("[bold red]Error:[/bold red] Undefined table or schema")
-            return None
-        finally:
-            self.conn.close()
-
     def load(self, file: Path, table: str, schema: str = "public", batch_size: int = 10000) -> None:
-        table_info = self.get_table_info(table, schema)
+        table_info = self.get_table_structure(table, schema)
         if not file.exists():
             console.print(f"[bold red]Error:[/bold red] File not found: {file}")
             exit(1)
