@@ -1,6 +1,0 @@
-pytest ~= 7.1.2
-toml ~= 0.10.2
-typer ~= 0.6.1
-rich ~= 12.5.1
-psycopg2-binary ~= 2.9.3
-fiona ~= 1.8.21
