@@ -1,4 +1,5 @@
 import pytest
+import toml
 
 
 @pytest.fixture
@@ -13,3 +14,17 @@ def default_config():
             "dsn": "postgres://test:test@sherpadb:5432/sherpa-test",
         }
     }
+
+
+@pytest.fixture
+def config_dir(tmp_path):
+    yield tmp_path / ".sherpa"
+
+
+@pytest.fixture
+def config_file(tmp_path, default_config, config_dir):
+    test_config_filepath = config_dir / "config"
+    config_dir.mkdir()
+    with open(test_config_filepath, "w") as f:
+        toml.dump(default_config, f)
+    yield test_config_filepath
