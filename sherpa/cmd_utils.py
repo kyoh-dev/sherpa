@@ -1,10 +1,9 @@
 from pathlib import Path
+from typing import Any
 
 import toml
-from psycopg2 import ProgrammingError
-from psycopg2.extensions import parse_dsn
 
-from sherpa.constants import CONFIG_FILE, console
+from sherpa.constants import console
 
 
 def load_config(file: Path) -> dict[str, dict[str, str]]:
@@ -21,19 +20,14 @@ def print_config(file: Path) -> None:
         console.print(f"[yellow]{name}[/yellow]=[green]{value}[/green]", highlight=False)
 
 
-def write_config() -> None:
-    dsn = console.input("[bold]Postgres DSN[/bold]: ")
-    try:
-        parsed_dsn = parse_dsn(dsn)
-    except ProgrammingError:
-        console.print("[bold red]Error:[/bold red] Invalid connection string")
-        exit(1)
-    else:
-        default_config = {
-            "default": {name: f"{value}" for name, value in parsed_dsn.items()},
-        }
-        default_config["default"]["dsn"] = f"{dsn}"
-        with open(CONFIG_FILE, "w") as f:
-            toml.dump(default_config, f)
+def write_config(file: Path, dsn: dict[str, Any]) -> None:
+    if not file.exists():
+        file.parent.mkdir(exist_ok=True)
 
-        console.print("[green]Config saved![/green]")
+    default_config = {
+        "default": {name: f"{value}" for name, value in dsn.items()},
+    }
+    with open(file, "w") as f:
+        toml.dump(default_config, f)
+
+    console.print("[green]Config saved![/green]")

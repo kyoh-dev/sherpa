@@ -30,6 +30,7 @@ pip install -e '.[dev,test]'
 
 ### Project goals
 
+- [ ] Manage DSN(s) through a stored config file
 - [ ] Support loading a GIS file to a PostGIS instance
 - [ ] Support specifying CRS transform on load
 - [ ] Support table creation on load

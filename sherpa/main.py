@@ -2,8 +2,10 @@ from pathlib import Path
 from typing import Optional
 
 from typer import Typer, Option, Argument
+from psycopg2 import ProgrammingError
+from psycopg2.extensions import parse_dsn
 
-from sherpa.constants import CONFIG_FILE
+from sherpa.constants import CONFIG_FILE, console
 from sherpa.cmd_utils import load_config, print_config, write_config
 from sherpa.pg_client import PgClient
 from sherpa.cmd_groups import info
@@ -18,12 +20,16 @@ def config(list_all: Optional[bool] = Option(False, "--list", "-l", help="List a
     Get and set configuration options
     """
     if list_all:
-        print_config()
+        print_config(CONFIG_FILE)
     else:
-        if not CONFIG_FILE.exists():
-            CONFIG_FILE.parent.mkdir(exist_ok=True)
-
-        write_config()
+        dsn = console.input("[bold]Postgres DSN[/bold]: ")
+        try:
+            parsed_dsn = parse_dsn(dsn)
+        except ProgrammingError:
+            console.print("[bold red]Error:[/bold red] Invalid connection string")
+            exit(1)
+        else:
+            write_config(CONFIG_FILE, parsed_dsn)
 
 
 @app.command()
