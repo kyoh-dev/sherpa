@@ -5,14 +5,12 @@ from typer.testing import CliRunner
 
 from sherpa import main
 from tests.constants import TEST_TABLE
-from tests.utils import truncate_tables
 
 
 @pytest.fixture
-def runner(monkeypatch, config_file, default_config):
+def runner(monkeypatch, config_file, pg_client):
     monkeypatch.setattr(main, "CONFIG_FILE", config_file)
     yield CliRunner()
-    truncate_tables(default_config["default"])
 
 
 def test_cmd_config_list_all(runner, default_config):
@@ -73,6 +71,11 @@ def test_cmd_load_unknown_table(runner, geojson_file):
     assert "Error: unable to get table structure for public.monkeys_in_space" in result.stdout
 
 
-def test_cmd_load_create_table(runner, geojson_file):
+def test_cmd_load_create_table(runner, geojson_file, pg_connection):
     result = runner.invoke(main.app, ["load", "--create", str(geojson_file)])
     assert result.exit_code == 0
+
+    with pg_connection.cursor() as cursor:
+        cursor.execute("DROP TABLE public.test_geojson_file")
+    pg_connection.commit()
+

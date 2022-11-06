@@ -1,22 +1,10 @@
 import pytest
 import fiona
-from psycopg2 import connect
 from psycopg2.sql import SQL, Identifier, Composed
 from rich.table import Table
 
 from sherpa.pg_client import PgTable, generate_row_data, generate_sql_insert_row, generate_sql_transforms
 from tests.constants import TEST_TABLE
-from tests.utils import truncate_tables
-
-
-@pytest.fixture
-def pg_connection(default_config):
-    conn = connect(**default_config["default"])
-    yield conn
-    conn.close()
-    # If a SQL transaction is aborted, all subsequent SQL commands will be ignored
-    # so reopening the connection to drop test data is necessary
-    truncate_tables(default_config["default"])
 
 
 @pytest.fixture
