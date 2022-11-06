@@ -47,8 +47,6 @@ cd sherpa
 pip install -e '.[dev,test]'
 ```
 
-## TODO
-
 ### Project goals
 
 - [x] Use DSN(s) through a stored config file
