@@ -4,6 +4,7 @@ export DOCKER_BUILDKIT	:=	1
 
 test:
 	docker-compose up -d dbtest
+	sleep 2
 	python -m pytest tests -vvv
 
 lint-check:
