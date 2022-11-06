@@ -22,7 +22,7 @@ def test_cmd_config_list_all(runner, default_config):
     result = runner.invoke(main.app, ["config", "--list"])
     assert result.exit_code == 0
     for k, v in default_config["default"].items():
-        assert f"{k}={v}" in result.stdout
+        assert f"{k}={v}" in result.stdout if k != "password" else f"{k}=****"
 
 
 def test_cmd_config_valid_dsn(runner):

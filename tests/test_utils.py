@@ -20,7 +20,7 @@ def test_print_config(capsys, config_file, default_config):
     print_config(config_file)
     output = capsys.readouterr().out
     for k, v in default_config["default"].items():
-        assert f"{k}={v}" in output
+        assert f"{k}={v}" in output if k != "password" else f"{k}=****"
 
 
 def test_write_config(config_file, default_config):
