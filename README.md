@@ -28,15 +28,10 @@ pip install -e '.[dev,test]'
 
 ## TODO
 
-### Short-term goals
+### Project goals
 
-- [ ] Add info command and sub-commands to get table information
+- [ ] Support loading a GIS file to a PostGIS instance
 - [ ] Support specifying CRS transform on load
 - [ ] Support table creation on load
-- [ ] Support listing tables from multiple schemas
-- [ ] Option to truncate table before loading
-
-### Long-term goals
-
-- [ ] Support loading to SpatiaLite
-- [ ] Support reading and loading different layers of a file
+- [ ] Support listing tables in schema with record counts
+- [ ] Support truncating a table before loading
