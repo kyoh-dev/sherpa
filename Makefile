@@ -3,6 +3,7 @@ export DOCKER_BUILDKIT	:=	1
 .PHONY: test lint-check lint-fix
 
 test:
+	docker-compose up -d dbtest
 	python -m pytest tests -vvv
 
 lint-check:

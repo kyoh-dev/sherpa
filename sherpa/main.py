@@ -37,14 +37,13 @@ def load(
     file: Path = Argument(..., help="Path to file to load"),
     table: str = Argument(..., help="Name of table to load to"),
     schema: str = Option("public", "--schema", "-s", help="Schema of table to load to"),
-    batch_size: int = Option(1000, "--batch-size", "-b", help="Number of records to insert at once"),
 ) -> None:
     """
     Load a file to a PostGIS table
     """
     current_config = load_config(CONFIG_FILE)
     client = PgClient(current_config["default"]["dsn"])
-    client.load(file, table, schema, batch_size)
+    client.load(file, table, schema)
 
 
 @app.callback()

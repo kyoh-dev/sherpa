@@ -9,9 +9,8 @@ def default_config():
             "user": "test",
             "password": "test",
             "dbname": "sherpa-test",
-            "host": "sherpadb",
-            "port": "5432",
-            "dsn": "postgres://test:test@sherpadb:5432/sherpa-test",
+            "host": "localhost",
+            "port": "27901",
         }
     }
 
