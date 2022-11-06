@@ -1,9 +1,10 @@
 import pytest
+import fiona
 from psycopg2 import connect
-from psycopg2.sql import SQL, Identifier
+from psycopg2.sql import SQL, Identifier, Composed
 from rich.table import Table
 
-from sherpa.pg_client import PgClient
+from sherpa.pg_client import PgClient, PgTable, generate_row_data, generate_sql_insert_row, generate_sql_transforms
 from tests.constants import TEST_TABLE
 
 
@@ -32,15 +33,37 @@ def pg_client(default_config):
 
 
 @pytest.fixture
+def pg_table(default_config):
+    yield PgTable(TEST_TABLE, ["polygon_id", "geometry"])
+    truncate_tables(default_config["default"])  # Why is this necessary?
+
+
+@pytest.fixture
 def rich_table():
     table = Table("SCHEMA", "TABLE", "ROWS")
     yield table
 
 
+def test_list_table_counts_no_data(pg_client, rich_table):
+    table = pg_client.list_table_counts()
+    rich_table.add_row("public", TEST_TABLE, "0")
+
+    assert table.row_count == rich_table.row_count
+    assert table.columns == rich_table.columns
+    assert table.rows == rich_table.rows
+
+
+def test_get_table_structure(pg_client):
+    table = pg_client.get_table_structure(TEST_TABLE)
+    assert table.name == TEST_TABLE
+    assert table.columns == ["polygon_id", "geometry"]
+    assert table.sql_composed_columns == Composed([Identifier("polygon_id"), SQL(", "), Identifier("geometry")])
+
+
 @pytest.mark.parametrize(
     "file", [
         pytest.param("geojson_file", id="geojson"),
-        pytest.param("gpkg_file", id='gpkg')
+        pytest.param("gpkg_file", id="gpkg")
     ]
 )
 def test_load_success(request, pg_client, pg_connection, file):
@@ -64,10 +87,26 @@ def test_load_success(request, pg_client, pg_connection, file):
     ]
 
 
-def test_list_table_counts_no_data(pg_client, rich_table):
-    table = pg_client.list_table_counts()
-    rich_table.add_row("public", TEST_TABLE, "0")
+def test_generate_row_data(geojson_file, pg_table):
+    with fiona.open(geojson_file) as collection:
+        rows = list(generate_row_data(collection, pg_table))
 
-    assert table.row_count == rich_table.row_count
-    assert table.columns == rich_table.columns
-    assert table.rows == rich_table.rows
+    assert rows == [
+        ('ABC123', '{"type": "Polygon", "coordinates": [[[148.6288077, -35.319649], [148.6336544, -35.3244957], [148.6230378, -35.3235725], [148.6288077, -35.319649]]]}'),
+        ('ABC123', '{"type": "Polygon", "coordinates": [[[148.6378087, -35.3277268], [148.6449633, -35.3224185], [148.6454249, -35.3293424], [148.6378087, -35.3277268]]]}'),
+        ('DEF456', '{"type": "Polygon", "coordinates": [[[148.6553491, -35.3256497], [148.6631962, -35.3210338], [148.6631962, -35.3284192], [148.6553491, -35.3256497]]]}'),
+        ('GHI789', '{"type": "Polygon", "coordinates": [[[148.6502716, -35.3060321], [148.6597343, -35.3074168], [148.6528104, -35.3143407], [148.6502716, -35.3060321]]]}')
+    ]
+
+
+def test_generate_sql_transforms(pg_table):
+    transforms = generate_sql_transforms(pg_table)
+    assert transforms == ["%s", "ST_GeomFromGeoJSON(%s)"]
+
+
+def test_generate_sql_insert_row(pg_table, pg_connection):
+    row_data = ('ABC123', '{"type": "Polygon", "coordinates": [[[148.6288077, -35.319649], [148.6336544, -35.3244957], [148.6230378, -35.3235725], [148.6288077, -35.319649]]]}')
+    with pg_connection.cursor() as cursor:
+        sql_insert_rows = generate_sql_insert_row(pg_table, row_data, cursor)
+
+    assert sql_insert_rows == Composed([SQL('('), SQL('\'ABC123\',ST_GeomFromGeoJSON(\'{"type": "Polygon", "coordinates": [[[148.6288077, -35.319649], [148.6336544, -35.3244957], [148.6230378, -35.3235725], [148.6288077, -35.319649]]]}\')'), SQL(')')])

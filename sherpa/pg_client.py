@@ -22,7 +22,7 @@ class PgTable:
     columns: list[str]
 
     @property
-    def composed_columns(self) -> Composed:
+    def sql_composed_columns(self) -> Composed:
         return SQL(", ").join(Identifier(x) for x in self.columns)
 
 
@@ -37,7 +37,7 @@ class PgClient:
             console.print(f"[bold red]Error:[/bold red] Unable to connect to database `{connection_details['dbname']}`")
             exit(1)
 
-    def close(self):
+    def close(self) -> None:
         self.conn.commit()
         self.conn.close()
 
@@ -57,7 +57,7 @@ class PgClient:
                 (schema,),
             )
             results = cursor.fetchall()
-        print(results)
+
         table = Table("SCHEMA", "TABLE", "ROWS", style="cyan")
         for row in results:
             table.add_row(row[0], row[1], str(row[2]))
@@ -103,7 +103,7 @@ class PgClient:
                             VALUES {}
                             RETURNING id;
                             """
-                        ).format(Identifier(schema, table), table_info.composed_columns, SQL(",").join(args_list))
+                        ).format(Identifier(schema, table), table_info.sql_composed_columns, SQL(",").join(args_list))
                         insert_cursor.execute(statement)
                         inserted += len(insert_cursor.fetchall())
                         self.conn.commit()
