@@ -6,7 +6,7 @@ from psycopg2 import ProgrammingError
 from psycopg2.extensions import parse_dsn
 
 from sherpa.constants import CONFIG_FILE, console
-from sherpa.cmd_utils import load_config, print_config, write_config
+from sherpa.utils import load_config, print_config, write_config
 from sherpa.pg_client import PgClient
 from sherpa.cmd_groups import info
 

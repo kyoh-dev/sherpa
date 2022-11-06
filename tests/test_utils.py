@@ -1,6 +1,6 @@
 import pytest
 
-from sherpa.cmd_utils import load_config, print_config, write_config
+from sherpa.utils import load_config, print_config, write_config
 
 
 def test_load_config_no_file(capsys, config_dir):

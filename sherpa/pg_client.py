@@ -42,25 +42,22 @@ class PgClient:
             cursor.execute(
                 """
                 SELECT
-                  table_schema as schema,
-                  table_name as table
-                FROM information_schema.tables
-                WHERE table_schema  = %s
-                  AND table_type <> 'VIEW'
-                  AND table_name <> 'spatial_ref_sys'
-                ORDER BY table_name
+                  schemaname,
+                  relname,
+                  n_live_tup
+                FROM pg_stat_user_tables
+                WHERE schemaname = %s
+                  AND relname <> 'spatial_ref_sys'
+                ORDER BY relname
                 """,
                 (schema,),
             )
             results = cursor.fetchall()
 
-        table = Table()
-        table.add_column("SCHEMA", style="cyan")
-        table.add_column("TABLE")
+        table = Table("SCHEMA", "TABLE", "ROWS", style="cyan")
         for row in results:
-            table.add_row(row[0], row[1])
+            table.add_row(row[0], row[1], str(row[2]))
 
-        self.conn.close()
         return table
 
     def get_table_info(self, table: str, schema: str = "public") -> PgTable:

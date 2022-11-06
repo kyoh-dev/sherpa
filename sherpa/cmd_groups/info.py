@@ -1,7 +1,7 @@
 from typer import Typer, Option, Argument
 
 from sherpa.constants import console, CONFIG_FILE
-from sherpa.cmd_utils import load_config
+from sherpa.utils import load_config
 from sherpa.pg_client import PgClient
 
 app = Typer(name="info")
