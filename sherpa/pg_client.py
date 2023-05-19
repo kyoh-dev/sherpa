@@ -105,7 +105,7 @@ class PgClient:
             )
             results = cursor.fetchone()
 
-        return results or False
+        return True if results else False
 
     def load(
         self, file: Path, table: str, schema: str = "public", create_table: bool = False, batch_size: int = 10000

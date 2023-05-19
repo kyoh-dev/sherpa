@@ -61,6 +61,17 @@ def test_load_success(request, pg_client, pg_connection, file):
     ]
 
 
+@pytest.mark.parametrize(
+    "schema, expected_result", [
+        pytest.param("public", True, id="public"),
+        pytest.param("generic", True, id="generic"),
+        pytest.param("non_existent", False, id="non_existent")
+    ]
+)
+def test_schema_exists(pg_client, schema, expected_result):
+    assert expected_result == pg_client.schema_exists(schema)
+
+
 def test_generate_row_data(geojson_file, pg_table):
     with fiona.open(geojson_file) as collection:
         rows = list(generate_row_data(collection, pg_table))
