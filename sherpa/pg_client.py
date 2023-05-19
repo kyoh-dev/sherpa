@@ -101,7 +101,7 @@ class PgClient:
                 FROM information_schema.schemata
                 WHERE schema_name = %s
                 """,
-                (schema,)
+                (schema,),
             )
             results = cursor.fetchone()
 
@@ -157,9 +157,7 @@ class PgClient:
 
     def create_table_from_file(self, file: Path, schema: str) -> str:
         if not self.schema_exists(schema):
-            console.print(
-                f"[bold red]Error:[/bold red] schema [bold cyan]{schema}[/bold cyan] does not exist"
-            )
+            console.print(f"[bold red]Error:[/bold red] schema [bold cyan]{schema}[/bold cyan] does not exist")
             exit(1)
 
         with fiona.open(file, mode="r") as collection:
