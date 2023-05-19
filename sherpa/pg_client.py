@@ -93,6 +93,20 @@ class PgClient:
 
         return PgTable(name=table, columns=[result for (result,) in results])
 
+    def schema_exists(self, schema: str) -> bool:
+        with self.conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT schema_name
+                FROM information_schema.schemata
+                WHERE schema_name = %s
+                """,
+                (schema,)
+            )
+            results = cursor.fetchone()
+
+        return results or False
+
     def load(
         self, file: Path, table: str, schema: str = "public", create_table: bool = False, batch_size: int = 10000
     ) -> None:
@@ -105,7 +119,7 @@ class PgClient:
             except lookup("42P07"):
                 # Catch DuplicateTable errors
                 console.print(
-                    f"[bold red]Error:[/bold red] table [cyan]{schema}.{file.name.removesuffix(file.suffix)}[/cyan] already exists"
+                    f"[bold red]Error:[/bold red] table [bold cyan]{schema}.{file.name.removesuffix(file.suffix)}[/bold cyan] already exists"
                 )
                 exit(1)
 
@@ -142,6 +156,12 @@ class PgClient:
             )
 
     def create_table_from_file(self, file: Path, schema: str) -> str:
+        if not self.schema_exists(schema):
+            console.print(
+                f"[bold red]Error:[/bold red] schema [bold cyan]{schema}[/bold cyan] does not exist"
+            )
+            exit(1)
+
         with fiona.open(file, mode="r") as collection:
             file_schema = collection.schema["properties"]
 
