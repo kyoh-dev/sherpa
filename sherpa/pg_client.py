@@ -12,8 +12,9 @@ from rich.progress import Progress
 from psycopg2 import DatabaseError, connect
 from psycopg2.sql import SQL, Identifier, Composed
 from psycopg2.extensions import connection as PgConnection, cursor as PgCursor
+from psycopg2.errors import lookup
 
-from sherpa.constants import console
+from sherpa.constants import console, DATA_TYPE_MAP
 
 
 @dataclass
@@ -92,6 +93,20 @@ class PgClient:
 
         return PgTable(name=table, columns=[result for (result,) in results])
 
+    def schema_exists(self, schema: str) -> bool:
+        with self.conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT schema_name
+                FROM information_schema.schemata
+                WHERE schema_name = %s
+                """,
+                (schema,),
+            )
+            results = cursor.fetchone()
+
+        return results or False
+
     def load(
         self, file: Path, table: str, schema: str = "public", create_table: bool = False, batch_size: int = 10000
     ) -> None:
@@ -99,7 +114,14 @@ class PgClient:
             console.print("[bold red]Error:[/bold red] you must provide a table name or the --create option")
             exit(1)
         elif create_table:
-            table = self.create_table_from_file(file, schema)
+            try:
+                table = self.create_table_from_file(file, schema)
+            except lookup("42P07"):
+                # Catch DuplicateTable errors
+                console.print(
+                    f"[bold red]Error:[/bold red] table [bold cyan]{schema}.{file.name.removesuffix(file.suffix)}[/bold cyan] already exists"
+                )
+                exit(1)
 
         table_info = self.get_table_structure(table, schema)
         if not file.exists():
@@ -134,24 +156,30 @@ class PgClient:
             )
 
     def create_table_from_file(self, file: Path, schema: str) -> str:
+        if not self.schema_exists(schema):
+            console.print(f"[bold red]Error:[/bold red] schema [bold cyan]{schema}[/bold cyan] does not exist")
+            exit(1)
+
         with fiona.open(file, mode="r") as collection:
-            columns = collection.schema["properties"]
+            file_schema = collection.schema["properties"]
 
         table_name = file.name.removesuffix(file.suffix)
-        columns = [SQL("{} TEXT").format(Identifier(col)) for col in columns.keys()]
-        q = SQL(
-            """
-            CREATE TABLE {table_name} (
-                id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-                {columns},
-                geometry GEOMETRY
-            )
-            """
-        ).format(table_name=Identifier(schema, table_name), columns=SQL(", ").join(columns))
+        columns = list(file_schema.items())
+        fields = [SQL("{} {}").format(Identifier(col[0]), SQL(DATA_TYPE_MAP[col[1]])) for col in columns]
 
         with self.conn:
             with self.conn.cursor() as cursor:
+                q = SQL(
+                    """
+                    CREATE TABLE {} (
+                        id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+                        {},
+                        geometry GEOMETRY
+                    )
+                    """,
+                ).format(Identifier(schema, table_name), SQL(",").join(fields))
                 cursor.execute(q)
+                self.conn.commit()
 
         console.print(f"[green]Success:[/green] Created table [bold cyan]{schema}.{table_name}[/bold cyan]")
         return table_name
