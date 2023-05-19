@@ -55,8 +55,8 @@ pip install -e '.[dev,test]'
 - [x] Use DSN(s) through a stored config file
 - [x] Support loading a GIS file to a PostGIS instance
 - [x] Support listing tables in schema with record counts
+- [x] Support table creation on load with schema inference
 - [ ] Support specifying CRS transform on load
-- [ ] Support table creation on load
 - [ ] Support truncating a table before loading
 - [ ] Support using and managing multiple DSNs
 - [ ] Performance improvements, i.e. use `COPY FROM` where possible
