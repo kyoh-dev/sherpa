@@ -1,18 +1,50 @@
+from typing import Any
+
 import pytest
 import toml
 import fiona
 from psycopg2 import connect
+from psycopg2.sql import SQL, Identifier
 
 from sherpa.pg_client import PgClient
-from tests.utils import truncate_test_table
+from tests.constants import TEST_TABLE
+
+
+def create_test_tables(config: dict[str, Any]) -> None:
+    conn = connect(**config)
+    with conn:
+        with conn.cursor() as cursor:
+            cursor.execute(SQL(
+                """                
+                CREATE TABLE public.{} (
+                    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+                    polygon_id TEXT NOT NULL,
+                    geometry GEOMETRY(Polygon, 4326) NOT NULL
+                );
+                
+                CREATE SCHEMA generic;
+                """
+            ).format(Identifier(TEST_TABLE)))
+    conn.close()
+
+
+def drop_test_tables(config: dict[str, Any]) -> None:
+    conn = connect(**config)
+    with conn:
+        with conn.cursor() as cursor:
+            for table in ("test_geojson_file", "test_gpkg_file", TEST_TABLE):
+                cursor.execute(SQL("DROP TABLE IF EXISTS {} CASCADE;").format(Identifier(table)))
+            cursor.execute("DROP SCHEMA IF EXISTS generic CASCADE;")
+    conn.close()
 
 
 @pytest.fixture
 def pg_client(default_config):
+    create_test_tables(default_config["default"])
     client = PgClient(default_config["default"])
     yield client
     client.close()
-    truncate_test_table(default_config["default"])
+    drop_test_tables(default_config["default"])
 
 
 @pytest.fixture
@@ -20,9 +52,6 @@ def pg_connection(default_config):
     conn = connect(**default_config["default"])
     yield conn
     conn.close()
-    # If a SQL transaction is aborted, all subsequent SQL commands will be ignored
-    # so reopening the connection to drop test data is necessary
-    truncate_test_table(default_config["default"])
 
 
 @pytest.fixture

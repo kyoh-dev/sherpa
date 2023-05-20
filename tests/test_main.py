@@ -93,10 +93,6 @@ def test_cmd_load_create_table(runner, geojson_file, pg_connection):
         ('GHI789', '0103000020E6100000010000000400000090F06206CF9462405B83520F2CA741C095511B8B1C956240D81E076F59A741C0A3CFA2D2E3946240A026E9503CA841C090F06206CF9462405B83520F2CA741C0')
     ]
 
-    with pg_connection.cursor() as cursor:
-        cursor.execute("DROP TABLE public.test_geojson_file")
-    pg_connection.commit()
-
 
 def test_cmd_load_no_table_input(runner, geojson_file):
     result = runner.invoke(main.app, ["load", str(geojson_file)])
