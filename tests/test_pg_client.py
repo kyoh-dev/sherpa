@@ -35,6 +35,17 @@ def test_get_table_structure(pg_client):
 
 
 @pytest.mark.parametrize(
+    "schema, expected_result", [
+        pytest.param("public", True, id="public"),
+        pytest.param("generic", True, id="generic"),
+        pytest.param("non_existent", False, id="non_existent")
+    ]
+)
+def test_schema_exists(pg_client, schema, expected_result):
+    assert expected_result == pg_client.schema_exists(schema)
+
+
+@pytest.mark.parametrize(
     "file", [
         pytest.param("geojson_file", id="geojson"),
         pytest.param("gpkg_file", id="gpkg")
@@ -61,15 +72,20 @@ def test_load_success(request, pg_client, pg_connection, file):
     ]
 
 
-@pytest.mark.parametrize(
-    "schema, expected_result", [
-        pytest.param("public", True, id="public"),
-        pytest.param("generic", True, id="generic"),
-        pytest.param("non_existent", False, id="non_existent")
-    ]
-)
-def test_schema_exists(pg_client, schema, expected_result):
-    assert expected_result == pg_client.schema_exists(schema)
+def test_create_table_from_file_success(pg_client, pg_connection, geojson_file):
+    pg_client.create_table_from_file(geojson_file, "generic")
+    with pg_connection.cursor() as cursor:
+        cursor.execute(SQL(
+            """
+            SELECT tablename
+            FROM pg_tables
+            WHERE schemaname = 'generic'
+                AND tablename = 'test_geojson_file'
+            """
+        ).format(Identifier(geojson_file.name.removesuffix(geojson_file.suffix))))
+        results = cursor.fetchone()[0]
+
+    assert results == "test_geojson_file"
 
 
 def test_generate_row_data(geojson_file, pg_table):

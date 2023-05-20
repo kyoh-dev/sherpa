@@ -166,18 +166,18 @@ class PgClient:
         table_name = file.name.removesuffix(file.suffix)
         columns = list(file_schema.items())
         fields = [SQL("{} {}").format(Identifier(col[0]), SQL(DATA_TYPE_MAP[col[1]])) for col in columns]
+        q = SQL(
+            """
+            CREATE TABLE {} (
+                id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+                {},
+                geometry GEOMETRY
+            )
+            """,
+        ).format(Identifier(schema, table_name), SQL(",").join(fields))
 
         with self.conn:
             with self.conn.cursor() as cursor:
-                q = SQL(
-                    """
-                    CREATE TABLE {} (
-                        id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-                        {},
-                        geometry GEOMETRY
-                    )
-                    """,
-                ).format(Identifier(schema, table_name), SQL(",").join(fields))
                 cursor.execute(q)
                 self.conn.commit()
 
