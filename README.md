@@ -59,4 +59,3 @@ pip install -e '.[dev,test]'
 - [ ] Support specifying CRS transform on load
 - [ ] Support truncating a table before loading
 - [ ] Support using and managing multiple DSNs
-- [ ] Performance improvements, i.e. use `COPY FROM` where possible
