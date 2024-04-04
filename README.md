@@ -59,3 +59,5 @@ pip install -e '.[dev,test]'
 - [ ] Support specifying CRS transform on load
 - [ ] Support truncating a table before loading
 - [ ] Support using and managing multiple DSNs
+- [ ] Improve load performance
+- [ ] Investigate using devcontainers as a replacement for docker-compose
