@@ -19,8 +19,7 @@ fiona = "^1.9.6"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.9.0"
-autoflake = "^2.3.1"
-black = "^24.3.0"
+ruff = "^0.3.5"
 pytest = "^8.1.1"
 
 [tool.mypy]
@@ -30,9 +29,9 @@ non_interactive = true
 ignore_missing_imports = true
 show_error_codes = true
 
-[tool.black]
+[tool.ruff]
 line-length = 120
-target-version = ['py312']
+target-version = 'py312'
 
 [build-system]
 requires = ["poetry-core"]
