@@ -7,7 +7,6 @@ test:
 	python -m pytest tests -vvv
 
 lint-check:
-	ls -lah
 	black --check --diff sherpa
 	autoflake --check -ri --ignore-init-module-imports --remove-all-unused-imports sherpa
 	mypy -p sherpa
