@@ -36,4 +36,4 @@ jobs:
       - name: Run unit tests
         run: |
           docker compose up -d --wait dbtest
-          poetry run pytest tests -vvv
+          poetry run python -m pytest tests -vvv
