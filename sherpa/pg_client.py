@@ -188,7 +188,10 @@ class PgClient:
 def generate_row_data(collection: Collection, table_info: PgTable) -> Generator[tuple[Any, ...], None, None]:
     for record in collection:
         properties = record["properties"]
-        geometry = record["geometry"]
+        geometry = {
+            "type": record["geometry"]["type"],
+            "coordinates": record["geometry"]["coordinates"]
+        }
 
         yield tuple(properties[col] for col in table_info.columns if col != "geometry") + (json.dumps(geometry),)
 
