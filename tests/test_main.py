@@ -53,7 +53,6 @@ def test_cmd_list_tables_unknown_schema(runner):
 
 def test_cmd_load_success(runner, geojson_file):
     result = runner.invoke(main.app, ["load", "--table", TEST_TABLE, str(geojson_file)])
-    print(result.stdout)
     assert result.exit_code == 0
     assert f"Success: loaded 4 records to public.{TEST_TABLE}" in result.stdout
 
