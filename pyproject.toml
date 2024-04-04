@@ -1,52 +1,25 @@
-[build-system]
-requires = ["flit_core >=3.2,<4"]
-build-backend = "flit_core.buildapi"
-
-[project]
+[tool.poetry]
 name = "sherpa"
+version = "0.1.0"
+description = "A simple CLI tool for loading GIS files to a PostGIS database."
+authors = ["Connor Keogh <contact@kyoh.run>"]
+license = "MIT"
 readme = "README.md"
-authors = [
-    {name = "Connor Keogh", email = "contact@kyoh.run"}
-]
-dynamic = ["version", "description"]
-requires-python = ">=3.6"
-dependencies = [
-    "toml ~= 0.10.2",
-    "typer ~= 0.6.1",
-    "rich ~= 12.5.1",
-    "psycopg2-binary ~= 2.9.3",
-    "fiona ~= 1.8.21"
-]
 
-[project.urls]
-Home = "https://github.com/kyoh-dev/sherpa"
+[tool.poetry.dependencies]
+python = "^3.10"
+toml = "^0.10.2"
+typer = "^0.12.0"
+rich = "^13.7.1"
+psycopg2-binary = "^2.9.9"
+fiona = "^1.9.6"
 
-[project.optional-dependencies]
-dev = [
-    "flit",
-    "mypy",
-    "autoflake",
-    "black"
-]
-test = [
-    "pytest",
-]
-ci = [
-    "mypy",
-    "autoflake",
-    "black"
-]
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.9.0"
+autoflake = "^2.3.1"
+black = "^24.3.0"
+pytest = "^8.1.1"
 
-[project.scripts]
-sherpa = "sherpa.main:app"
-
-[tool.mypy]
-strict = true
-install_types = true
-non_interactive = true
-ignore_missing_imports = true
-show_error_codes = true
-
-[tool.black]
-line-length = 120
-target-version = ['py39']
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
