@@ -108,10 +108,17 @@ class PgClient:
         return True if results else False
 
     def load(
-        self, file: Path, table: str, schema: str = "public", create_table: bool = False, batch_size: int = 10000
+        self,
+        file: Path,
+        table: str,
+        schema: str = "public",
+        create_table: bool = False,
+        batch_size: int = 10000,
     ) -> None:
         if not table and create_table is False:
-            console.print("[bold red]Error:[/bold red] you must provide a table name or the --create option")
+            console.print(
+                "[bold red]Error:[/bold red] you must provide a table name or the --create option"
+            )
             exit(1)
         elif create_table:
             try:
@@ -133,19 +140,28 @@ class PgClient:
 
             inserted = 0
             with Progress() as progress:
-                load_task = progress.add_task(f"[cyan]Loading...[/cyan]", total=len(collection))
+                load_task = progress.add_task(
+                    f"[cyan]Loading...[/cyan]", total=len(collection)
+                )
                 while not progress.finished:
                     batch = list(islice(row_generator, 0, batch_size))
                     if batch:
                         insert_cursor = self.conn.cursor()
-                        args_list = [generate_sql_insert_row(table_info, x, insert_cursor) for x in batch]
+                        args_list = [
+                            generate_sql_insert_row(table_info, x, insert_cursor)
+                            for x in batch
+                        ]
                         statement = SQL(
                             """
                             INSERT INTO {}({})
                             VALUES {}
                             RETURNING id;
                             """
-                        ).format(Identifier(schema, table), table_info.sql_composed_columns, SQL(",").join(args_list))
+                        ).format(
+                            Identifier(schema, table),
+                            table_info.sql_composed_columns,
+                            SQL(",").join(args_list),
+                        )
                         insert_cursor.execute(statement)
                         inserted += len(insert_cursor.fetchall())
                         self.conn.commit()
@@ -157,7 +173,9 @@ class PgClient:
 
     def create_table_from_file(self, file: Path, schema: str) -> str:
         if not self.schema_exists(schema):
-            console.print(f"[bold red]Error:[/bold red] schema [bold cyan]{schema}[/bold cyan] does not exist")
+            console.print(
+                f"[bold red]Error:[/bold red] schema [bold cyan]{schema}[/bold cyan] does not exist"
+            )
             exit(1)
 
         with fiona.open(file, mode="r") as collection:
@@ -165,7 +183,10 @@ class PgClient:
 
         table_name = file.name.removesuffix(file.suffix)
         columns = list(file_schema.items())
-        fields = [SQL("{} {}").format(Identifier(col[0]), SQL(DATA_TYPE_MAP[col[1]])) for col in columns]
+        fields = [
+            SQL("{} {}").format(Identifier(col[0]), SQL(DATA_TYPE_MAP[col[1]]))
+            for col in columns
+        ]
         q = SQL(
             """
             CREATE TABLE {} (
@@ -181,27 +202,42 @@ class PgClient:
                 cursor.execute(q)
                 self.conn.commit()
 
-        console.print(f"[green]Success:[/green] Created table [bold cyan]{schema}.{table_name}[/bold cyan]")
+        console.print(
+            f"[green]Success:[/green] Created table [bold cyan]{schema}.{table_name}[/bold cyan]"
+        )
         return table_name
 
 
-def generate_row_data(collection: Collection, table_info: PgTable) -> Generator[tuple[Any, ...], None, None]:
+def generate_row_data(
+    collection: Collection, table_info: PgTable
+) -> Generator[tuple[Any, ...], None, None]:
     for record in collection:
         properties = record["properties"]
         geometry = {
             "type": record["geometry"]["type"],
-            "coordinates": record["geometry"]["coordinates"]
+            "coordinates": record["geometry"]["coordinates"],
         }
 
-        yield tuple(properties[col] for col in table_info.columns if col != "geometry") + (json.dumps(geometry),)
+        yield tuple(
+            properties[col] for col in table_info.columns if col != "geometry"
+        ) + (json.dumps(geometry),)
 
 
 def generate_sql_transforms(table_info: PgTable) -> list[str]:
-    sql_transforms = ["%s" if x != "geometry" else "ST_GeomFromGeoJSON(%s)" for x in table_info.columns]
+    sql_transforms = [
+        "%s" if x != "geometry" else "ST_GeomFromGeoJSON(%s)"
+        for x in table_info.columns
+    ]
     return sql_transforms
 
 
-def generate_sql_insert_row(table_info: PgTable, row_data: tuple[Any, ...], cursor: PgCursor) -> Composed:
+def generate_sql_insert_row(
+    table_info: PgTable, row_data: tuple[Any, ...], cursor: PgCursor
+) -> Composed:
     return SQL("({})").format(
-        SQL(cursor.mogrify(",".join(generate_sql_transforms(table_info)), row_data).decode("utf-8"))
+        SQL(
+            cursor.mogrify(
+                ",".join(generate_sql_transforms(table_info)), row_data
+            ).decode("utf-8")
+        )
     )

@@ -8,4 +8,9 @@ CONFIG_FILE = Path(CONFIG_DIR) / "config"
 console = Console()
 
 # Maps Python data types to PG to infer table schema from a file
-DATA_TYPE_MAP = {"str": "TEXT", "bool": "BOOLEAN", "int": "INTEGER", "float": "DOUBLE PRECISION"}
+DATA_TYPE_MAP = {
+    "str": "TEXT",
+    "bool": "BOOLEAN",
+    "int": "INTEGER",
+    "float": "DOUBLE PRECISION",
+}

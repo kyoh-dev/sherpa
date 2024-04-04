@@ -18,9 +18,14 @@ def print_config(file: Path) -> None:
     current_config = load_config(file)
     for name, value in current_config["default"].items():
         if name == "password":
-            console.print(f"[yellow]{name}[/yellow]=[green]{'*' * len(value)}[/green]", highlight=False)
+            console.print(
+                f"[yellow]{name}[/yellow]=[green]{'*' * len(value)}[/green]",
+                highlight=False,
+            )
         else:
-            console.print(f"[yellow]{name}[/yellow]=[green]{value}[/green]", highlight=False)
+            console.print(
+                f"[yellow]{name}[/yellow]=[green]{value}[/green]", highlight=False
+            )
 
 
 def write_config(file: Path, dsn: dict[str, Any]) -> None:

@@ -13,7 +13,11 @@ app = Typer(name="sherpa")
 
 
 @app.command()
-def config(list_all: Optional[bool] = Option(False, "--list", "-l", help="List all config options")) -> None:
+def config(
+    list_all: Optional[bool] = Option(
+        False, "--list", "-l", help="List all config options"
+    )
+) -> None:
     """
     Get and set configuration options
     """
@@ -31,7 +35,9 @@ def config(list_all: Optional[bool] = Option(False, "--list", "-l", help="List a
 
 
 @app.command(name="tables")
-def list_tables(schema: str = Option("public", "--schema", "-s", help="Schema of tables to target")) -> None:
+def list_tables(
+    schema: str = Option("public", "--schema", "-s", help="Schema of tables to target")
+) -> None:
     """
     List tables in a specified schema (default: public)
     """
@@ -48,7 +54,10 @@ def load(
     table: str = Option("", "--table", "-t", help="Name of table to load to"),
     schema: str = Option("public", "--schema", "-s", help="Schema of table to load to"),
     create_table: bool = Option(
-        False, "--create", "-c", help="Creates a table inferring the schema from the load file"
+        False,
+        "--create",
+        "-c",
+        help="Creates a table inferring the schema from the load file",
     ),
 ) -> None:
     """
