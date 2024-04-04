@@ -7,6 +7,8 @@ test:
 	python -m pytest tests -vvv
 
 lint-check:
+	python --version
+	black --version
 	black --check --diff sherpa
 	autoflake --check -ri --ignore-init-module-imports --remove-all-unused-imports sherpa
 	mypy -p sherpa
