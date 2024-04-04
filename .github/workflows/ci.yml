@@ -34,4 +34,6 @@ jobs:
         run: poetry install --no-interaction --no-root
 
       - name: Run unit tests
-        run: make test
+        run: |
+          docker compose up -d --wait dbtest
+          poetry run pytest tests -vvv
