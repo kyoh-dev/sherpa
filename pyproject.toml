@@ -6,6 +6,9 @@ authors = ["Connor Keogh <contact@kyoh.run>"]
 license = "MIT"
 readme = "README.md"
 
+[tool.poetry.scripts]
+sherpa = "sherpa.main:app"
+
 [tool.poetry.dependencies]
 python = "^3.10"
 toml = "^0.10.2"
