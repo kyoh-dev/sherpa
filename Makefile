@@ -7,11 +7,11 @@ test:
 	python -m pytest tests -vvv
 
 lint-check:
-	black --check --diff ./sherpa
+	black --check --diff sherpa
 	autoflake --check -ri --ignore-init-module-imports --remove-all-unused-imports sherpa
 	mypy -p sherpa
 
 lint-fix:
-	black ./sherpa
+	black sherpa
 	autoflake -ri --ignore-init-module-imports --remove-all-unused-imports sherpa
 	mypy -p sherpa
