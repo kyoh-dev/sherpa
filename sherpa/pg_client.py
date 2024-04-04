@@ -138,7 +138,7 @@ class PgClient:
 
             inserted = 0
             with Progress() as progress:
-                load_task = progress.add_task(f"[cyan]Loading...[/cyan]", total=len(collection))
+                load_task = progress.add_task("[cyan]Loading...[/cyan]", total=len(collection))
                 while not progress.finished:
                     batch = list(islice(row_generator, 0, batch_size))
                     if batch:

@@ -24,6 +24,6 @@ def test_print_config(capsys, config_file, default_config):
 
 
 def test_write_config(config_file, default_config):
-    write_config(config_file, default_config['default'])
+    write_config(config_file, default_config["default"])
     config = load_config(config_file)
     assert config == default_config
