@@ -34,7 +34,7 @@ jobs:
         run: poetry install --no-interaction --no-root
 
       - name: Test black
-        run: black --check --diff sherpa
+        run: poetry run black --check --diff sherpa
 
       - name: Run lint check
         run: make lint-check
