@@ -1,17 +1,18 @@
 export DOCKER_BUILDKIT	:=	1
 
-.PHONY: test lint-check lint-fix
+.PHONY: test lint-check lint-fix format
 
 test:
 	docker compose up -d --wait dbtest
 	python -m pytest tests -vvv
 
 lint-check:
-	black --check --diff sherpa
-	autoflake --check -ri --ignore-init-module-imports --remove-all-unused-imports sherpa
+	ruff check sherpa
 	mypy -p sherpa
 
 lint-fix:
-	black sherpa
-	autoflake -ri --ignore-init-module-imports --remove-all-unused-imports sherpa
+	ruff check --fix sherpa
 	mypy -p sherpa
+
+format:
+	ruff format sherpa tests
