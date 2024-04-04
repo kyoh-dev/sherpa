@@ -23,6 +23,17 @@ autoflake = "^2.3.1"
 black = "^24.3.0"
 pytest = "^8.1.1"
 
+[tool.mypy]
+strict = true
+install_types = true
+non_interactive = true
+ignore_missing_imports = true
+show_error_codes = true
+
+[tool.black]
+line-length = 120
+target-version = ['py312']
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

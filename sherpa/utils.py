@@ -23,9 +23,7 @@ def print_config(file: Path) -> None:
                 highlight=False,
             )
         else:
-            console.print(
-                f"[yellow]{name}[/yellow]=[green]{value}[/green]", highlight=False
-            )
+            console.print(f"[yellow]{name}[/yellow]=[green]{value}[/green]", highlight=False)
 
 
 def write_config(file: Path, dsn: dict[str, Any]) -> None:
