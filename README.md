@@ -19,11 +19,11 @@ $ sherpa
 
  A CLI tool for loading GIS files to a PostGIS database
 
-╭─ Commands ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ dsn                Manage your DSN profile                                                                                             │
-│ load               Load a file to a PostGIS table                                                                                      │
-│ tables             Get info about tables in your PostGIS instance                                                                      │
-╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ──────────────────────────────────────────────────────────╮
+│ dsn                Manage your DSN profile                          │
+│ load               Load a file to a PostGIS table                   │
+│ tables             Get info about tables in your PostGIS instance   │
+╰─────────────────────────────────────────────────────────────────────╯
 ```
 
 ## Development
@@ -32,10 +32,6 @@ TBC
 
 ### TODO
 
-- [x] Use DSN(s) through a stored config file
-- [x] Support loading a GIS file to a PostGIS instance
-- [x] Support listing tables in schema with record counts
-- [x] Support table creation on load with schema inference
 - [ ] Update docs and tests
 - [ ] Fix error handling
   - [ ] Fail loads early when issues occur (i.e. invalid data type)
