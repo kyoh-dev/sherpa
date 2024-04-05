@@ -56,8 +56,9 @@ pip install -e '.[dev,test]'
 - [x] Support loading a GIS file to a PostGIS instance
 - [x] Support listing tables in schema with record counts
 - [x] Support table creation on load with schema inference
-- [ ] Add more descriptive error messages
-- [ ] Fail loads early when issues occur
+- [ ] Fix error handling
+  - [ ] Fail loads early when issues occur (i.e. invalid data type)
+  - [ ] More descriptive error messages
 - [ ] Support specifying CRS transform on load
 - [ ] Support truncating a table before loading
 - [ ] Support using and managing multiple DSNs
