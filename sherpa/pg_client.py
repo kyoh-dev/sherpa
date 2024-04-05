@@ -14,7 +14,7 @@ from psycopg2.sql import SQL, Identifier, Composed
 from psycopg2.extensions import connection as PgConnection, cursor as PgCursor
 
 from sherpa.constants import CONSOLE, DATA_TYPE_MAP
-from sherpa.utils import format_success, format_highlight
+from sherpa.utils import format_error, format_highlight
 
 
 @dataclass
@@ -36,9 +36,8 @@ class PgClient:
         try:
             self.conn = connect(**connection_details)
         except DatabaseError:
-            CONSOLE.print(
-                f"[bold red]Error:[/bold red] Unable to connect to database [bold cyan]{connection_details['dbname']}[/bold cyan]"
-            )
+            dbname = connection_details["dbname"]
+            CONSOLE.print(format_error(f"Unable to connect to database {format_highlight(f'{dbname}')}"))
             exit(1)
 
     def close(self) -> None:
@@ -109,7 +108,7 @@ class PgClient:
         file: Path,
         table_info: PgTable,
         batch_size: int = 10000,
-    ) -> None:
+    ) -> int:
         with fiona.open(file, mode="r") as collection:
             row_generator = generate_row_data(collection, table_info)
 
@@ -137,11 +136,7 @@ class PgClient:
                         self.conn.commit()
                         progress.update(load_task, advance=len(batch))
 
-            CONSOLE.print(
-                format_success(
-                    f"Loaded {inserted} records to {format_highlight(f'{table_info.schema}.{table_info.table}')}"
-                )
-            )
+        return inserted
 
     def create_table_from_file(self, file: Path, schema: str) -> str:
         with fiona.open(file, mode="r") as collection:
@@ -164,7 +159,6 @@ class PgClient:
             cursor.execute(q)
             self.conn.commit()
 
-        CONSOLE.print(format_success(f"Created table {format_highlight(f'{schema}.{table_name}')}"))
         return table_name
 
 

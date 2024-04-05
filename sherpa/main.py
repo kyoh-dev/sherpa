@@ -5,7 +5,7 @@ from typer import Typer, Argument, Option
 from psycopg2.errors import lookup
 
 from sherpa.constants import CONSOLE
-from sherpa.utils import read_dsn_file, format_error, format_highlight
+from sherpa.utils import read_dsn_file, format_success, format_error, format_highlight
 from sherpa.pg_client import PgClient
 
 from sherpa.cmd import dsn
@@ -49,6 +49,7 @@ def load_file_to_pg(
     if create_table:
         try:
             table_name = client.create_table_from_file(file, schema_name)
+            CONSOLE.print(format_success(f"Created table {format_highlight(f'{schema_name}.{table_name}')}"))
         except lookup("42P07"):
             # Catch DuplicateTable errors
             CONSOLE.print(
@@ -65,9 +66,14 @@ def load_file_to_pg(
         )
         exit(1)
 
-    client.load(file, table_info, create_table)
-
+    rows_inserted = client.load(file, table_info, create_table)
     client.close()
+
+    CONSOLE.print(
+        format_success(
+            f"Loaded {rows_inserted} records to {format_highlight(f'{table_info.schema}.{table_info.table}')}"
+        )
+    )
 
 
 @app.callback()
