@@ -2,8 +2,8 @@ name: CI sherpa
 on: [push]
 
 jobs:
-  lint-and-test:
-    name: 'Lint and test sherpa'
+  test:
+    name: 'Test sherpa'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
