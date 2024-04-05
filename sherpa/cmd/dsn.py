@@ -64,3 +64,10 @@ def update_dsn_profile(
         exit(1)
     else:
         CONSOLE.print(format_success(f"{format_highlight(key)} updated in DSN profile"))
+
+
+@app.callback()
+def main() -> None:
+    """
+    Manage your DSN profile
+    """

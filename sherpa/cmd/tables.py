@@ -25,3 +25,10 @@ def list_tables(schema: Annotated[str, Argument(help="Schema of tables to target
         CONSOLE.print(table_info)
 
     client.close()
+
+
+@app.callback()
+def main() -> None:
+    """
+    Get info about tables in your PostGIS instance
+    """

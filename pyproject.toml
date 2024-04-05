@@ -29,6 +29,10 @@ non_interactive = true
 ignore_missing_imports = true
 show_error_codes = true
 
+[[tool.mypy.overrides]]
+module = "tomlkit"
+ignore_errors = true
+
 [tool.ruff]
 line-length = 120
 target-version = 'py311'

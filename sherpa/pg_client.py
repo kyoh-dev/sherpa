@@ -12,9 +12,9 @@ from rich.progress import Progress
 from psycopg2 import DatabaseError, connect
 from psycopg2.sql import SQL, Identifier, Composed
 from psycopg2.extensions import connection as PgConnection, cursor as PgCursor
-from psycopg2.errors import lookup
 
 from sherpa.constants import CONSOLE, DATA_TYPE_MAP
+from sherpa.utils import format_success, format_highlight
 
 
 @dataclass
@@ -111,26 +111,9 @@ class PgClient:
         file: Path,
         table: str,
         schema: str = "public",
-        create_table: bool = False,
         batch_size: int = 10000,
     ) -> None:
-        if not table and create_table is False:
-            CONSOLE.print("[bold red]Error:[/bold red] you must provide a table name or the --create option")
-            exit(1)
-        elif create_table:
-            try:
-                table = self.create_table_from_file(file, schema)
-            except lookup("42P07"):
-                # Catch DuplicateTable errors
-                CONSOLE.print(
-                    f"[bold red]Error:[/bold red] table [bold cyan]{schema}.{file.name.removesuffix(file.suffix)}[/bold cyan] already exists"
-                )
-                exit(1)
-
         table_info = self.get_table_structure(table, schema)
-        if not file.exists():
-            CONSOLE.print(f"[bold red]Error:[/bold red] File not found: {file}")
-            exit(1)
 
         with fiona.open(file, mode="r") as collection:
             row_generator = generate_row_data(collection, table_info)
@@ -159,9 +142,7 @@ class PgClient:
                         self.conn.commit()
                         progress.update(load_task, advance=len(batch))
 
-            CONSOLE.print(
-                f"[green]Success:[/green] loaded [bold yellow]{inserted}[/bold yellow] records to [bold cyan]{schema}.{table}[/bold cyan]"
-            )
+            CONSOLE.print(format_success(f"Loaded {inserted} records to {format_highlight(f'{schema}.{table}')}"))
 
     def create_table_from_file(self, file: Path, schema: str) -> str:
         if not self.schema_exists(schema):
