@@ -8,8 +8,8 @@ from tests.constants import TEST_TABLE
 
 
 @pytest.fixture
-def pg_table(default_config):
-    yield PgTable(TEST_TABLE, ["polygon_id", "geometry"])
+def pg_table(dsn_profile):
+    yield PgTable("public", TEST_TABLE, ["polygon_id", "geometry"])
 
 
 @pytest.fixture
@@ -47,8 +47,8 @@ def test_schema_exists(pg_client, schema, expected_result):
 
 
 @pytest.mark.parametrize("file", [pytest.param("geojson_file", id="geojson"), pytest.param("gpkg_file", id="gpkg")])
-def test_load_success(request, pg_client, pg_connection, file):
-    pg_client.load(request.getfixturevalue(file), TEST_TABLE)
+def test_load_success(request, pg_client, pg_connection, pg_table, file):
+    pg_client.load(request.getfixturevalue(file), pg_table)
     with pg_connection.cursor() as cursor:
         cursor.execute(
             SQL(
@@ -93,7 +93,7 @@ def test_create_table_from_file_success(pg_client, pg_connection, geojson_file):
             WHERE schemaname = 'generic'
                 AND tablename = 'test_geojson_file'
             """
-            ).format(Identifier(geojson_file.table.removesuffix(geojson_file.suffix)))
+            ).format(Identifier(geojson_file.name.removesuffix(geojson_file.suffix)))
         )
         results = cursor.fetchone()[0]
 

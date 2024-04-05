@@ -1,7 +1,7 @@
 from typing import Any
 
 import pytest
-import toml
+import tomlkit
 import fiona
 from psycopg2 import connect
 from psycopg2.sql import SQL, Identifier
@@ -41,23 +41,23 @@ def drop_test_tables(config: dict[str, Any]) -> None:
 
 
 @pytest.fixture
-def pg_client(default_config):
-    create_test_tables(default_config["default"])
-    client = PgClient(default_config["default"])
+def pg_client(dsn_profile):
+    create_test_tables(dsn_profile["default"])
+    client = PgClient(dsn_profile["default"])
     yield client
     client.close()
-    drop_test_tables(default_config["default"])
+    drop_test_tables(dsn_profile["default"])
 
 
 @pytest.fixture
-def pg_connection(default_config):
-    conn = connect(**default_config["default"])
+def pg_connection(dsn_profile):
+    conn = connect(**dsn_profile["default"])
     yield conn
     conn.close()
 
 
 @pytest.fixture
-def default_config():
+def dsn_profile():
     yield {
         "default": {
             "user": "test",
@@ -75,12 +75,12 @@ def config_dir(tmp_path):
 
 
 @pytest.fixture
-def config_file(tmp_path, default_config, config_dir):
-    test_config_filepath = config_dir / "config"
+def dsn_file(tmp_path, dsn_profile, config_dir):
+    test_dsn_filepath = config_dir / "dsn.toml"
     config_dir.mkdir()
-    with open(test_config_filepath, "w") as f:
-        toml.dump(default_config, f)
-    yield test_config_filepath
+    with open(test_dsn_filepath, "w") as f:
+        tomlkit.dump(dsn_profile, f)
+    yield test_dsn_filepath
 
 
 @pytest.fixture

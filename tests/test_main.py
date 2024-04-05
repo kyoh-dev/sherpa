@@ -8,15 +8,15 @@ from tests.constants import TEST_TABLE
 
 
 @pytest.fixture
-def runner(monkeypatch, config_file, pg_client):
-    monkeypatch.setattr(main, "CONFIG_FILE", config_file)
+def runner(monkeypatch, dsn_file, pg_client):
+    monkeypatch.setattr(main, "CONFIG_FILE", dsn_file)
     yield CliRunner()
 
 
-def test_cmd_config_list_all(runner, default_config):
+def test_cmd_config_list_all(runner, dsn_profile):
     result = runner.invoke(main.app, ["config", "--list"])
     assert result.exit_code == 0
-    for k, v in default_config["default"].items():
+    for k, v in dsn_profile["default"].items():
         assert f"{k}={v}" in result.stdout if k != "password" else f"{k}=****"
 
 
