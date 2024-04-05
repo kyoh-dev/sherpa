@@ -3,7 +3,7 @@ from typer import Typer
 from sherpa.cmd import dsn
 
 app = Typer(name="sherpa")
-app.add_typer(dsn.app)
+app.add_typer(dsn.app, name="dsn")
 
 
 # @app.command()

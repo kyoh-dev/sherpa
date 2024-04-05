@@ -5,7 +5,9 @@ from rich.console import Console
 
 CONFIG_DIR = Path.home() / ".sherpa"
 CONFIG_FILE = Path(CONFIG_DIR) / "config.toml"
-DSN_FILE = TOMLFile(Path(CONFIG_DIR) / "dsn.toml")
+
+DSN_FILEPATH = Path(CONFIG_DIR) / "dsn.toml"
+DSN_FILE = TOMLFile(DSN_FILEPATH)
 
 CONSOLE = Console()
 

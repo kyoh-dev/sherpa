@@ -16,14 +16,14 @@ def format_info(msg: str) -> str:
 
 
 def format_highlight(word: str) -> str:
-    return f"[yellow]{word}[/yellow]"
+    return f"[yellow1]{word}[/yellow1]"
 
 
 def read_dsn_file() -> TOMLDocument:
     try:
         dsn_profile = DSN_FILE.read()
     except FileNotFoundError:
-        CONSOLE.print(format_info("No DSN profile added yet. Run `sherpa dsn add` to add one."))
+        CONSOLE.print(format_error("No DSN profile added yet. Run `sherpa dsn add` to add one."))
         exit(0)
     else:
         return dsn_profile

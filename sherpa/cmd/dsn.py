@@ -1,13 +1,13 @@
 import tomlkit
 from typer import Typer
 
-from sherpa.constants import DSN_FILE, CONFIG_DIR, CONSOLE
+from sherpa.constants import DSN_FILEPATH, CONFIG_DIR, CONSOLE
 from sherpa.utils import format_highlight, format_success, read_dsn_file
 
 app = Typer()
 
 
-@app.command("list")
+@app.command("ls")
 def list_dsn_profile() -> None:
     """
     List DSN profile values
@@ -35,11 +35,11 @@ def add_dsn_profile() -> None:
     profile_doc = tomlkit.document()
     default_profile = tomlkit.table()
     for x in ["user", "password", "dbname", "host", "port"]:
-        dsn_value = CONSOLE.input(f"{format_highlight(x)}: ")
+        dsn_value = CONSOLE.input(f"{format_highlight(x)}: ", password=True if x == "password" else False)
         default_profile.add(x, dsn_value)
 
     profile_doc.add("default", default_profile)
-    with open(DSN_FILE, "w") as f:
+    with open(DSN_FILEPATH, "w") as f:
         tomlkit.dump(profile_doc, f)
 
     CONSOLE.print(format_success("DSN settings saved"))
