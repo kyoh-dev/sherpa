@@ -8,7 +8,7 @@ app = Typer()
 
 
 @app.command("list")
-def list_dsns() -> None:
+def list_dsn_profile() -> None:
     """
     List DSN profile values
     """
@@ -25,7 +25,7 @@ def list_dsns() -> None:
 
 
 @app.command("add")
-def add_dsn() -> None:
+def add_dsn_profile() -> None:
     """
     Add a DSN profile
     """
@@ -46,7 +46,7 @@ def add_dsn() -> None:
 
 
 # @app.command("update")
-# def update_dsn(key: Annotated[str, Argument(help="Which part of the DSN to update")]) -> None:
+# def update_dsn_profile(key: Annotated[str, Argument(help="Which part of the DSN to update")]) -> None:
 #     """
 #     Update a key within a DSN profile
 #     """
