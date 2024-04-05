@@ -2,8 +2,8 @@ from typer import Typer
 
 from sherpa.cmd import dsn
 
-app = Typer(name="sherpa")
-app.add_typer(dsn.app, name="dsn")
+app = Typer(name="sherpa", no_args_is_help=True)
+app.add_typer(dsn.app, name="dsn", no_args_is_help=True)
 
 
 # @app.command()
