@@ -5,7 +5,7 @@ from rich.console import Console
 CONFIG_DIR = Path.home() / ".sherpa"
 CONFIG_FILE = Path(CONFIG_DIR) / "config"
 
-console = Console()
+CONSOLE = Console()
 
 # Maps Python data types to PG to infer table schema from a file
 DATA_TYPE_MAP = {

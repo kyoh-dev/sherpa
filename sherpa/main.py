@@ -5,7 +5,7 @@ from typer import Typer, Option, Argument
 from psycopg2 import ProgrammingError
 from psycopg2.extensions import parse_dsn
 
-from sherpa.constants import CONFIG_FILE, console
+from sherpa.constants import CONFIG_FILE, CONSOLE
 from sherpa.utils import load_config, print_config, write_config
 from sherpa.pg_client import PgClient
 
@@ -20,11 +20,11 @@ def config(list_all: Optional[bool] = Option(False, "--list", "-l", help="List a
     if list_all:
         print_config(CONFIG_FILE)
     else:
-        dsn = console.input("[bold]Postgres DSN[/bold]: ")
+        dsn = CONSOLE.input("[bold]Postgres DSN[/bold]: ")
         try:
             parsed_dsn = parse_dsn(dsn)
         except ProgrammingError:
-            console.print("[bold red]Error:[/bold red] Invalid connection string")
+            CONSOLE.print("[bold red]Error:[/bold red] Invalid connection string")
             exit(1)
         else:
             write_config(CONFIG_FILE, parsed_dsn)
@@ -38,7 +38,7 @@ def list_tables(schema: str = Option("public", "--schema", "-s", help="Schema of
     current_config = load_config(CONFIG_FILE)
     client = PgClient(current_config["default"])
     table_info = client.list_table_counts(schema)
-    console.print(table_info)
+    CONSOLE.print(table_info)
     client.close()
 
 

@@ -14,7 +14,7 @@ from psycopg2.sql import SQL, Identifier, Composed
 from psycopg2.extensions import connection as PgConnection, cursor as PgCursor
 from psycopg2.errors import lookup
 
-from sherpa.constants import console, DATA_TYPE_MAP
+from sherpa.constants import CONSOLE, DATA_TYPE_MAP
 
 
 @dataclass
@@ -35,7 +35,7 @@ class PgClient:
         try:
             self.conn = connect(**connection_details)
         except DatabaseError:
-            console.print(
+            CONSOLE.print(
                 f"[bold red]Error:[/bold red] Unable to connect to database [bold cyan]{connection_details['dbname']}[/bold cyan]"
             )
             exit(1)
@@ -62,7 +62,7 @@ class PgClient:
             results = cursor.fetchall()
 
         if len(results) == 0:
-            console.print("[bold red]Error:[/bold red] schema not found")
+            CONSOLE.print("[bold red]Error:[/bold red] schema not found")
             exit(1)
 
         table = Table("SCHEMA", "TABLE", "ROWS", style="cyan")
@@ -86,7 +86,7 @@ class PgClient:
             results = cursor.fetchall()
 
         if len(results) == 0:
-            console.print(
+            CONSOLE.print(
                 f"[bold red]Error:[/bold red] unable to get table structure for [bold cyan]{schema}.{table}[/bold cyan]"
             )
             exit(1)
@@ -116,21 +116,21 @@ class PgClient:
         batch_size: int = 10000,
     ) -> None:
         if not table and create_table is False:
-            console.print("[bold red]Error:[/bold red] you must provide a table name or the --create option")
+            CONSOLE.print("[bold red]Error:[/bold red] you must provide a table name or the --create option")
             exit(1)
         elif create_table:
             try:
                 table = self.create_table_from_file(file, schema)
             except lookup("42P07"):
                 # Catch DuplicateTable errors
-                console.print(
+                CONSOLE.print(
                     f"[bold red]Error:[/bold red] table [bold cyan]{schema}.{file.name.removesuffix(file.suffix)}[/bold cyan] already exists"
                 )
                 exit(1)
 
         table_info = self.get_table_structure(table, schema)
         if not file.exists():
-            console.print(f"[bold red]Error:[/bold red] File not found: {file}")
+            CONSOLE.print(f"[bold red]Error:[/bold red] File not found: {file}")
             exit(1)
 
         with fiona.open(file, mode="r") as collection:
@@ -160,13 +160,13 @@ class PgClient:
                         self.conn.commit()
                         progress.update(load_task, advance=len(batch))
 
-            console.print(
+            CONSOLE.print(
                 f"[green]Success:[/green] loaded [bold yellow]{inserted}[/bold yellow] records to [bold cyan]{schema}.{table}[/bold cyan]"
             )
 
     def create_table_from_file(self, file: Path, schema: str) -> str:
         if not self.schema_exists(schema):
-            console.print(f"[bold red]Error:[/bold red] schema [bold cyan]{schema}[/bold cyan] does not exist")
+            CONSOLE.print(f"[bold red]Error:[/bold red] schema [bold cyan]{schema}[/bold cyan] does not exist")
             exit(1)
 
         with fiona.open(file, mode="r") as collection:
@@ -190,7 +190,7 @@ class PgClient:
                 cursor.execute(q)
                 self.conn.commit()
 
-        console.print(f"[green]Success:[/green] Created table [bold cyan]{schema}.{table_name}[/bold cyan]")
+        CONSOLE.print(f"[green]Success:[/green] Created table [bold cyan]{schema}.{table_name}[/bold cyan]")
         return table_name
 
 
