@@ -1,70 +1,87 @@
 from pathlib import Path
-from typing import Optional
+from typing import Annotated
 
-from typer import Typer, Option, Argument
-from psycopg2 import ProgrammingError
-from psycopg2.extensions import parse_dsn
+from typer import Typer, Argument, Option
+from psycopg2.errors import lookup
 
-from sherpa.constants import CONFIG_FILE, CONSOLE
-from sherpa.utils import load_config, print_config, write_config
-from sherpa.pg_client import PgClient
+from sherpa.constants import CONSOLE
+from sherpa.utils import read_dsn_file, format_success, format_error, format_highlight
+from sherpa.pg_client import PgClient, PgClientError
 
-app = Typer(name="sherpa")
+from sherpa.cmd import dsn
+from sherpa.cmd import tables
 
-
-@app.command()
-def config(list_all: Optional[bool] = Option(False, "--list", "-l", help="List all config options")) -> None:
-    """
-    Get and set configuration options
-    """
-    if list_all:
-        print_config(CONFIG_FILE)
-    else:
-        dsn = CONSOLE.input("[bold]Postgres DSN[/bold]: ")
-        try:
-            parsed_dsn = parse_dsn(dsn)
-        except ProgrammingError:
-            CONSOLE.print("[bold red]Error:[/bold red] Invalid connection string")
-            exit(1)
-        else:
-            write_config(CONFIG_FILE, parsed_dsn)
+app = Typer(name="sherpa", no_args_is_help=True)
+app.add_typer(dsn.app, name="dsn", no_args_is_help=True)
+app.add_typer(tables.app, name="tables", no_args_is_help=True)
 
 
-@app.command(name="tables")
-def list_tables(schema: str = Option("public", "--schema", "-s", help="Schema of tables to target")) -> None:
-    """
-    List tables in a specified schema (default: public)
-    """
-    current_config = load_config(CONFIG_FILE)
-    client = PgClient(current_config["default"])
-    table_info = client.list_table_counts(schema)
-    CONSOLE.print(table_info)
-    client.close()
-
-
-@app.command()
-def load(
-    file: Path = Argument(..., help="Path to file to load"),
-    table: str = Option("", "--table", "-t", help="Name of table to load to"),
-    schema: str = Option("public", "--schema", "-s", help="Schema of table to load to"),
-    create_table: bool = Option(
-        False,
-        "--create",
-        "-c",
-        help="Creates a table inferring the schema from the load file",
-    ),
+@app.command("load")
+def load_file_to_pg(
+    file: Annotated[Path, Argument(help="Path of the file to load")],
+    table_name: Annotated[str, Option("--table", "-t", help="Name of the table to load to")] = None,
+    schema_name: Annotated[str, Option("--schema", "-s", help="Schema of the table to load to")] = "public",
+    create_table: Annotated[
+        bool, Option("--create", "-c", help="Create table by inferring the schema from the load file")
+    ] = False,
 ) -> None:
     """
     Load a file to a PostGIS table
+
+    You can either specify an existing table to load to, or create one on the fly
     """
-    current_config = load_config(CONFIG_FILE)
-    client = PgClient(current_config["default"])
-    client.load(file, table, schema, create_table)
+    dsn_profile = read_dsn_file()
+
+    if not file.exists():
+        CONSOLE.print(format_error(f"File not found: {file}"))
+        exit(1)
+
+    if not table_name and create_table is False:
+        CONSOLE.print(format_error("You must either provide a table with --table/-t or the --create/-c option"))
+        exit(1)
+
+    try:
+        client = PgClient(dsn_profile["default"])
+    except PgClientError as ex:
+        CONSOLE.print(format_error(str(ex)))
+        exit(1)
+
+    if not client.schema_exists(schema_name):
+        CONSOLE.print(format_error(f"Schema {format_highlight(f'{schema_name}')} needs to exist already"))
+        exit(1)
+
+    if create_table:
+        try:
+            table_name = client.create_table_from_file(file, schema_name)
+            CONSOLE.print(format_success(f"Created table {format_highlight(f'{schema_name}.{table_name}')}"))
+        except lookup("42P07"):
+            # Catch DuplicateTable errors
+            CONSOLE.print(
+                format_error(
+                    f"Table {format_highlight(f'{schema_name}.{file.name.removesuffix(file.suffix)}')} already exists, use the --table/-t option instead"
+                )
+            )
+            exit(1)
+
+    table_info = client.get_table_structure(table_name, schema_name)
+    if not table_info:
+        CONSOLE.print(
+            format_error(f"Unable to get table structure for {format_highlight(f'{schema_name}.{table_name}')}")
+        )
+        exit(1)
+
+    rows_inserted = client.load(file, table_info)
     client.close()
+
+    CONSOLE.print(
+        format_success(
+            f"Loaded {rows_inserted} records to {format_highlight(f'{table_info.schema}.{table_info.table}')}"
+        )
+    )
 
 
 @app.callback()
 def main() -> None:
     """
-    A CLI tool for loading GIS files to a PostGIS database.
+    A CLI tool for loading GIS files to a PostGIS database
     """

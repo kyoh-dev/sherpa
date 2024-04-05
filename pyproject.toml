@@ -11,11 +11,11 @@ sherpa = "sherpa.main:app"
 
 [tool.poetry.dependencies]
 python = "^3.11.0"
-toml = "^0.10.2"
 typer = "^0.12.0"
 rich = "^13.7.1"
 psycopg2-binary = "^2.9.9"
 fiona = "^1.9.6"
+tomlkit = "^0.12.4"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.9.0"
@@ -28,6 +28,10 @@ install_types = true
 non_interactive = true
 ignore_missing_imports = true
 show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = "tomlkit"
+ignore_errors = true
 
 [tool.ruff]
 line-length = 120

@@ -1,9 +1,8 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from itertools import islice
 from collections.abc import Generator
-from typing import Any
+from typing import Any, Optional
 
 import fiona
 from fiona import Collection
@@ -12,14 +11,20 @@ from rich.progress import Progress
 from psycopg2 import DatabaseError, connect
 from psycopg2.sql import SQL, Identifier, Composed
 from psycopg2.extensions import connection as PgConnection, cursor as PgCursor
-from psycopg2.errors import lookup
 
-from sherpa.constants import CONSOLE, DATA_TYPE_MAP
+from sherpa.constants import DATA_TYPE_MAP
+
+
+class PgClientError(Exception):
+    """
+    Raise when an error occurs in a PgClient instance or operation
+    """
 
 
 @dataclass
 class PgTable:
-    name: str
+    schema: str
+    table: str
     columns: list[str]
 
     @property
@@ -35,16 +40,13 @@ class PgClient:
         try:
             self.conn = connect(**connection_details)
         except DatabaseError:
-            CONSOLE.print(
-                f"[bold red]Error:[/bold red] Unable to connect to database [bold cyan]{connection_details['dbname']}[/bold cyan]"
-            )
-            exit(1)
+            raise PgClientError(f"Unable to connect to database `{connection_details['dbname']}`")
 
     def close(self) -> None:
         self.conn.commit()
         self.conn.close()
 
-    def list_table_counts(self, schema: str = "public") -> Table:
+    def list_table_counts(self, schema: str = "public") -> Optional[Table]:
         with self.conn.cursor() as cursor:
             cursor.execute(
                 """
@@ -62,8 +64,7 @@ class PgClient:
             results = cursor.fetchall()
 
         if len(results) == 0:
-            CONSOLE.print("[bold red]Error:[/bold red] schema not found")
-            exit(1)
+            return None
 
         table = Table("SCHEMA", "TABLE", "ROWS", style="cyan")
         for row in results:
@@ -71,7 +72,7 @@ class PgClient:
 
         return table
 
-    def get_table_structure(self, table: str, schema: str = "public") -> PgTable:
+    def get_table_structure(self, table: str, schema: str = "public") -> Optional[PgTable]:
         with self.conn.cursor() as cursor:
             cursor.execute(
                 """
@@ -86,12 +87,9 @@ class PgClient:
             results = cursor.fetchall()
 
         if len(results) == 0:
-            CONSOLE.print(
-                f"[bold red]Error:[/bold red] unable to get table structure for [bold cyan]{schema}.{table}[/bold cyan]"
-            )
-            exit(1)
+            return None
 
-        return PgTable(name=table, columns=[result for (result,) in results])
+        return PgTable(schema=schema, table=table, columns=[result for (result,) in results])
 
     def schema_exists(self, schema: str) -> bool:
         with self.conn.cursor() as cursor:
@@ -110,37 +108,18 @@ class PgClient:
     def load(
         self,
         file: Path,
-        table: str,
-        schema: str = "public",
-        create_table: bool = False,
+        table_info: PgTable,
         batch_size: int = 10000,
-    ) -> None:
-        if not table and create_table is False:
-            CONSOLE.print("[bold red]Error:[/bold red] you must provide a table name or the --create option")
-            exit(1)
-        elif create_table:
-            try:
-                table = self.create_table_from_file(file, schema)
-            except lookup("42P07"):
-                # Catch DuplicateTable errors
-                CONSOLE.print(
-                    f"[bold red]Error:[/bold red] table [bold cyan]{schema}.{file.name.removesuffix(file.suffix)}[/bold cyan] already exists"
-                )
-                exit(1)
-
-        table_info = self.get_table_structure(table, schema)
-        if not file.exists():
-            CONSOLE.print(f"[bold red]Error:[/bold red] File not found: {file}")
-            exit(1)
-
+    ) -> int:
         with fiona.open(file, mode="r") as collection:
-            row_generator = generate_row_data(collection, table_info)
-
+            rows = list(generate_row_data(collection, table_info))
             inserted = 0
             with Progress() as progress:
                 load_task = progress.add_task("[cyan]Loading...[/cyan]", total=len(collection))
                 while not progress.finished:
-                    batch = list(islice(row_generator, 0, batch_size))
+                    # NB: If this gets to be a problem with large files
+                    # go back to using islice iterator
+                    batch = rows[inserted : batch_size + inserted]
                     if batch:
                         insert_cursor = self.conn.cursor()
                         args_list = [generate_sql_insert_row(table_info, x, insert_cursor) for x in batch]
@@ -151,7 +130,7 @@ class PgClient:
                             RETURNING id;
                             """
                         ).format(
-                            Identifier(schema, table),
+                            Identifier(table_info.schema, table_info.table),
                             table_info.sql_composed_columns,
                             SQL(",").join(args_list),
                         )
@@ -160,15 +139,9 @@ class PgClient:
                         self.conn.commit()
                         progress.update(load_task, advance=len(batch))
 
-            CONSOLE.print(
-                f"[green]Success:[/green] loaded [bold yellow]{inserted}[/bold yellow] records to [bold cyan]{schema}.{table}[/bold cyan]"
-            )
+            return inserted
 
     def create_table_from_file(self, file: Path, schema: str) -> str:
-        if not self.schema_exists(schema):
-            CONSOLE.print(f"[bold red]Error:[/bold red] schema [bold cyan]{schema}[/bold cyan] does not exist")
-            exit(1)
-
         with fiona.open(file, mode="r") as collection:
             file_schema = collection.schema["properties"]
 
@@ -185,12 +158,10 @@ class PgClient:
             """,
         ).format(Identifier(schema, table_name), SQL(",").join(fields))
 
-        with self.conn:
-            with self.conn.cursor() as cursor:
-                cursor.execute(q)
-                self.conn.commit()
+        with self.conn.cursor() as cursor:
+            cursor.execute(q)
+            self.conn.commit()
 
-        CONSOLE.print(f"[green]Success:[/green] Created table [bold cyan]{schema}.{table_name}[/bold cyan]")
         return table_name
 
 

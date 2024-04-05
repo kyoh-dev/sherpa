@@ -8,8 +8,8 @@ from tests.constants import TEST_TABLE
 
 
 @pytest.fixture
-def pg_table(default_config):
-    yield PgTable(TEST_TABLE, ["polygon_id", "geometry"])
+def pg_table(dsn_profile):
+    yield PgTable("public", TEST_TABLE, ["polygon_id", "geometry"])
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def test_list_table_counts_no_data(pg_client, rich_table):
 
 def test_get_table_structure(pg_client):
     table = pg_client.get_table_structure(TEST_TABLE)
-    assert table.name == TEST_TABLE
+    assert table.table == TEST_TABLE
     assert table.columns == ["polygon_id", "geometry"]
     assert table.sql_composed_columns == Composed([Identifier("polygon_id"), SQL(", "), Identifier("geometry")])
 
@@ -47,8 +47,8 @@ def test_schema_exists(pg_client, schema, expected_result):
 
 
 @pytest.mark.parametrize("file", [pytest.param("geojson_file", id="geojson"), pytest.param("gpkg_file", id="gpkg")])
-def test_load_success(request, pg_client, pg_connection, file):
-    pg_client.load(request.getfixturevalue(file), TEST_TABLE)
+def test_load_success(request, pg_client, pg_connection, pg_table, file):
+    pg_client.load(request.getfixturevalue(file), pg_table)
     with pg_connection.cursor() as cursor:
         cursor.execute(
             SQL(
