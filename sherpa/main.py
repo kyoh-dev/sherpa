@@ -70,7 +70,7 @@ def load_file_to_pg(
         )
         exit(1)
 
-    rows_inserted = client.load(file, table_info, create_table)
+    rows_inserted = client.load(file, table_info)
     client.close()
 
     CONSOLE.print(

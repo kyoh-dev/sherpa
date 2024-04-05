@@ -1,7 +1,6 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from itertools import islice
 from collections.abc import Generator
 from typing import Any, Optional
 
@@ -113,13 +112,12 @@ class PgClient:
         batch_size: int = 10000,
     ) -> int:
         with fiona.open(file, mode="r") as collection:
-            row_generator = generate_row_data(collection, table_info)
-
+            rows = list(generate_row_data(collection, table_info))
             inserted = 0
             with Progress() as progress:
                 load_task = progress.add_task("[cyan]Loading...[/cyan]", total=len(collection))
                 while not progress.finished:
-                    batch = list(islice(row_generator, 0, batch_size))
+                    batch = rows[inserted : batch_size + inserted]
                     if batch:
                         insert_cursor = self.conn.cursor()
                         args_list = [generate_sql_insert_row(table_info, x, insert_cursor) for x in batch]
@@ -139,7 +137,7 @@ class PgClient:
                         self.conn.commit()
                         progress.update(load_task, advance=len(batch))
 
-        return inserted
+            return inserted
 
     def create_table_from_file(self, file: Path, schema: str) -> str:
         with fiona.open(file, mode="r") as collection:
