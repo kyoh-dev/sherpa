@@ -117,6 +117,8 @@ class PgClient:
             with Progress() as progress:
                 load_task = progress.add_task("[cyan]Loading...[/cyan]", total=len(collection))
                 while not progress.finished:
+                    # NB: If this gets to be a problem with large files
+                    # go back to using islice iterator
                     batch = rows[inserted : batch_size + inserted]
                     if batch:
                         insert_cursor = self.conn.cursor()
