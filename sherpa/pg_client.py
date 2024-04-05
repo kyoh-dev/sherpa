@@ -41,7 +41,7 @@ class PgClient:
         try:
             self.conn = connect(**connection_details)
         except DatabaseError:
-            raise PgClientError(f"Unable to connect to database {connection_details['dbname']}")
+            raise PgClientError(f"Unable to connect to database `{connection_details['dbname']}`")
 
     def close(self) -> None:
         self.conn.commit()
@@ -158,7 +158,7 @@ class PgClient:
             """,
         ).format(Identifier(schema, table_name), SQL(",").join(fields))
 
-        with self.conn.cusror() as cursor:
+        with self.conn.cursor() as cursor:
             cursor.execute(q)
             self.conn.commit()
 

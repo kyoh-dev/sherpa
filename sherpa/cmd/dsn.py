@@ -47,13 +47,13 @@ def add_dsn_profile() -> None:
     CONSOLE.print(format_success("DSN settings saved"))
 
 
-@app.command("update")
-def update_dsn_profile(
+@app.command("set")
+def set_dsn_profile_value(
     key: Annotated[str, Argument(help=f"Update one of {DSN_KEYS}")],
     value: Annotated[str, Argument(help="Value to set the key to")],
 ) -> None:
     """
-    Update a key within a DSN profile
+    Set a value for a key in your DSN profile
     """
     dsn_profile = read_dsn_file()
 
@@ -63,6 +63,9 @@ def update_dsn_profile(
         CONSOLE.print(format_error(f"The DSN profile only uses the keys: {DSN_KEYS}"))
         exit(1)
     else:
+        with open(DSN_FILEPATH, "w") as f:
+            tomlkit.dump(dsn_profile, f)
+
         CONSOLE.print(format_success(f"{format_highlight(key)} updated in DSN profile"))
 
 
