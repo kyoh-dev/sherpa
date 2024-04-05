@@ -9,7 +9,7 @@ from tests.constants import TEST_TABLE
 
 @pytest.fixture
 def runner(monkeypatch, dsn_profile, pg_client):
-    monkeypatch.setattr("sherpa.utils.read_dsn_file", lambda: dsn_profile)
+    monkeypatch.setattr("sherpa.main.read_dsn_file", lambda: dsn_profile)
     yield CliRunner()
 
 
