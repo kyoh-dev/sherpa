@@ -1,8 +1,10 @@
-import tomlkit
-from typer import Typer
+from typing import Annotated
 
-from sherpa.constants import DSN_FILEPATH, CONFIG_DIR, CONSOLE
-from sherpa.utils import format_highlight, format_success, read_dsn_file
+import tomlkit
+from typer import Typer, Argument
+
+from sherpa.constants import DSN_FILEPATH, DSN_KEYS, CONFIG_DIR, CONSOLE
+from sherpa.utils import format_highlight, format_success, format_error, read_dsn_file
 
 app = Typer()
 
@@ -45,10 +47,20 @@ def add_dsn_profile() -> None:
     CONSOLE.print(format_success("DSN settings saved"))
 
 
-# @app.command("update")
-# def update_dsn_profile(key: Annotated[str, Argument(help="Which part of the DSN to update")]) -> None:
-#     """
-#     Update a key within a DSN profile
-#     """
-#     dsn_profile = read_dsn_file()
-#     ...
+@app.command("update")
+def update_dsn_profile(
+    key: Annotated[str, Argument(help=f"Update one of {DSN_KEYS}")],
+    value: Annotated[str, Argument(help="Value to set the key to")],
+) -> None:
+    """
+    Update a key within a DSN profile
+    """
+    dsn_profile = read_dsn_file()
+
+    try:
+        dsn_profile["default"][key] = value
+    except KeyError:
+        CONSOLE.print(format_error(f"The DSN profile only uses the keys: {DSN_KEYS}"))
+        exit(1)
+    else:
+        CONSOLE.print(format_success(f"{format_highlight(key)} updated in DSN profile"))

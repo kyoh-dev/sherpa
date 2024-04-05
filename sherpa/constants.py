@@ -11,6 +11,8 @@ DSN_FILE = TOMLFile(DSN_FILEPATH)
 
 CONSOLE = Console()
 
+DSN_KEYS = {"user", "password", "dbname", "host", "port"}
+
 # Maps Python data types to PG to infer table schema from a file
 DATA_TYPE_MAP = {
     "str": "TEXT",
