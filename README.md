@@ -59,6 +59,7 @@ pip install -e '.[dev,test]'
 - [ ] Fix error handling
   - [ ] Fail loads early when issues occur (i.e. invalid data type)
   - [ ] More descriptive error messages
+  - [ ] Add support for list and dict types -> JSONB columns
 - [ ] Support specifying CRS transform on load
 - [ ] Support truncating a table before loading
 - [ ] Support using and managing multiple DSNs
