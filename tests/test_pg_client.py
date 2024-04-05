@@ -29,7 +29,7 @@ def test_list_table_counts_no_data(pg_client, rich_table):
 
 def test_get_table_structure(pg_client):
     table = pg_client.get_table_structure(TEST_TABLE)
-    assert table.name == TEST_TABLE
+    assert table.table == TEST_TABLE
     assert table.columns == ["polygon_id", "geometry"]
     assert table.sql_composed_columns == Composed([Identifier("polygon_id"), SQL(", "), Identifier("geometry")])
 
@@ -93,7 +93,7 @@ def test_create_table_from_file_success(pg_client, pg_connection, geojson_file):
             WHERE schemaname = 'generic'
                 AND tablename = 'test_geojson_file'
             """
-            ).format(Identifier(geojson_file.name.removesuffix(geojson_file.suffix)))
+            ).format(Identifier(geojson_file.table.removesuffix(geojson_file.suffix)))
         )
         results = cursor.fetchone()[0]
 

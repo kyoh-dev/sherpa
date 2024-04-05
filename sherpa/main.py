@@ -42,9 +42,13 @@ def load_file_to_pg(
 
     client = PgClient(dsn_profile["default"])
 
+    if not client.schema_exists(schema_name):
+        CONSOLE.print(format_error(f"Schema {format_highlight(f'{schema_name}')} needs to exist already"))
+        exit(1)
+
     if create_table:
         try:
-            table = client.create_table_from_file(file, schema_name)
+            table_name = client.create_table_from_file(file, schema_name)
         except lookup("42P07"):
             # Catch DuplicateTable errors
             CONSOLE.print(
@@ -53,10 +57,15 @@ def load_file_to_pg(
                 )
             )
             exit(1)
-    else:
-        table = table_name
 
-    client.load(file, table, schema_name, create_table)
+    table_info = client.get_table_structure(table_name, schema_name)
+    if not table_info:
+        CONSOLE.print(
+            format_error(f"Unable to get table structure for {format_highlight(f'{schema_name}.{table_name}')}")
+        )
+        exit(1)
+
+    client.load(file, table_info, create_table)
 
     client.close()
 
