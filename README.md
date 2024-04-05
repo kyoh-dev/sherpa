@@ -8,47 +8,27 @@ on loading data to a PostGIS instance.
 
 ## Installation
 
-Installation requires an up-to-date version of `pip`:
-```shell
-pip install -U pip
-```
-
-For a regular, non-development install:
-```shell
-pip install git+https://github.com/kyoh-dev/sherpa.git#egg=sherpa
-```
+TBC
 
 ## Usage
 
 ```
-$ sherpa --help
+$ sherpa
 
  Usage: sherpa [OPTIONS] COMMAND [ARGS]...
 
- A CLI tool for loading GIS files to a PostGIS database.
+ A CLI tool for loading GIS files to a PostGIS database
 
-╭─ Options ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --install-completion        [bash|zsh|fish|powershell|pwsh]  Install completion for the specified shell. [default: None]                                         │
-│ --show-completion           [bash|zsh|fish|powershell|pwsh]  Show completion for the specified shell, to copy it or customize the installation. [default: None]  │
-│ --help                                                       Show this message and exit.                                                                         │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Commands ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ config                        Get and set configuration options                                                                                                  │
-│ load                          Load a file to a PostGIS table                                                                                                     │
-│ tables                        List tables in a specified schema (default: public)                                                                                │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ dsn                Manage your DSN profile                                                                                             │
+│ load               Load a file to a PostGIS table                                                                                      │
+│ tables             Get info about tables in your PostGIS instance                                                                      │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
 ## Development
 
-For a development install, clone the repository and install with extra dev/test dependencies:
-```shell
-git clone https://github.com/kyoh-dev/sherpa.git
-
-cd sherpa
-
-pip install -e '.[dev,test]'
-```
+TBC
 
 ### TODO
 
@@ -56,6 +36,7 @@ pip install -e '.[dev,test]'
 - [x] Support loading a GIS file to a PostGIS instance
 - [x] Support listing tables in schema with record counts
 - [x] Support table creation on load with schema inference
+- [ ] Update docs and tests
 - [ ] Fix error handling
   - [ ] Fail loads early when issues occur (i.e. invalid data type)
   - [ ] More descriptive error messages
