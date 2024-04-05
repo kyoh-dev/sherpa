@@ -6,7 +6,7 @@ from psycopg2.errors import lookup
 
 from sherpa.constants import CONSOLE
 from sherpa.utils import read_dsn_file, format_success, format_error, format_highlight
-from sherpa.pg_client import PgClient
+from sherpa.pg_client import PgClient, PgClientError
 
 from sherpa.cmd import dsn
 from sherpa.cmd import tables
@@ -40,7 +40,11 @@ def load_file_to_pg(
         CONSOLE.print(format_error("You must either provide a table with --table/-t or the --create/-c option"))
         exit(1)
 
-    client = PgClient(dsn_profile["default"])
+    try:
+        client = PgClient(dsn_profile["default"])
+    except PgClientError as ex:
+        CONSOLE.print(format_error(str(ex)))
+        exit(1)
 
     if not client.schema_exists(schema_name):
         CONSOLE.print(format_error(f"Schema {format_highlight(f'{schema_name}')} needs to exist already"))

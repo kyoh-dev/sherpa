@@ -13,8 +13,13 @@ from psycopg2 import DatabaseError, connect
 from psycopg2.sql import SQL, Identifier, Composed
 from psycopg2.extensions import connection as PgConnection, cursor as PgCursor
 
-from sherpa.constants import CONSOLE, DATA_TYPE_MAP
-from sherpa.utils import format_error, format_highlight
+from sherpa.constants import DATA_TYPE_MAP
+
+
+class PgClientError(Exception):
+    """
+    Raise when an error occurs in a PgClient instance or operation
+    """
 
 
 @dataclass
@@ -36,9 +41,7 @@ class PgClient:
         try:
             self.conn = connect(**connection_details)
         except DatabaseError:
-            dbname = connection_details["dbname"]
-            CONSOLE.print(format_error(f"Unable to connect to database {format_highlight(f'{dbname}')}"))
-            exit(1)
+            raise PgClientError(f"Unable to connect to database {connection_details['dbname']}")
 
     def close(self) -> None:
         self.conn.commit()
