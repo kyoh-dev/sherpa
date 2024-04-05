@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from itertools import islice
 from collections.abc import Generator
-from typing import Any
+from typing import Any, Optional
 
 import fiona
 from fiona import Collection
@@ -44,7 +44,7 @@ class PgClient:
         self.conn.commit()
         self.conn.close()
 
-    def list_table_counts(self, schema: str = "public") -> Table:
+    def list_table_counts(self, schema: str = "public") -> Optional[Table]:
         with self.conn.cursor() as cursor:
             cursor.execute(
                 """
@@ -62,8 +62,7 @@ class PgClient:
             results = cursor.fetchall()
 
         if len(results) == 0:
-            CONSOLE.print("[bold red]Error:[/bold red] schema not found")
-            exit(1)
+            return None
 
         table = Table("SCHEMA", "TABLE", "ROWS", style="cyan")
         for row in results:

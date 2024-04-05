@@ -1,27 +1,11 @@
 from typer import Typer
 
 from sherpa.cmd import dsn
+from sherpa.cmd import tables
 
 app = Typer(name="sherpa", no_args_is_help=True)
 app.add_typer(dsn.app, name="dsn", no_args_is_help=True)
-
-
-# @app.command()
-# def config(list_all: Optional[bool] = Option(False, "--list", "-l", help="List all config options")) -> None:
-#     """
-#     Get and set configuration options
-#     """
-#     if list_all:
-#         print_config(CONFIG_FILE)
-#     else:
-#         dsn = CONSOLE.input("[bold]Postgres DSN[/bold]: ")
-#         try:
-#             parsed_dsn = parse_dsn(dsn)
-#         except ProgrammingError:
-#             CONSOLE.print("[bold red]Error:[/bold red] Invalid connection string")
-#             exit(1)
-#         else:
-#             write_config(CONFIG_FILE, parsed_dsn)
+app.add_typer(tables.app, name="tables", no_args_is_help=True)
 
 
 # @app.command(name="tables")
