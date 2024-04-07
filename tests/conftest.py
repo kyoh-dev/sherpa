@@ -162,6 +162,6 @@ def geojson_file(tmp_path, geometry_records):
 def gpkg_file(tmp_path, geometry_records):
     f = tmp_path / "test_gpkg_file.gpkg"
     schema = {"geometry": "Polygon", "properties": {"polygon_id": "str"}}
-    with fiona.open(f, "w", schema=schema, driver="GPKG", crs="EPSG:4283") as collection:
+    with fiona.open(f, "w", schema=schema, driver="GPKG", crs="EPSG:4326") as collection:
         collection.writerecords(geometry_records)
     yield f

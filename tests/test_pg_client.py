@@ -3,6 +3,7 @@ import fiona
 from psycopg2.sql import SQL, Identifier, Composed
 
 from sherpa.pg_client import PgTable, generate_row_data, generate_sql_insert_row, generate_sql_transforms
+from sherpa.geometry import get_collection_srid
 
 from tests.constants import TEST_TABLE
 
@@ -87,37 +88,43 @@ def test_create_table_from_file_success(pg_client, pg_connection, geojson_file):
 
 def test_generate_row_data(geojson_file, pg_table):
     with fiona.open(geojson_file) as collection:
-        rows = list(generate_row_data(collection, pg_table))
+        srid = get_collection_srid(collection)
+        rows = list(generate_row_data(collection, pg_table, srid))
 
     assert rows == [
         (
             "ABC123",
-            '{"type": "Polygon", "coordinates": [[[148.6288077, -35.319649], [148.6336544, -35.3244957], [148.6230378, -35.3235725], [148.6288077, -35.319649]]]}',
+            b"\x01\x03\x00\x00\x00\x01\x00\x00\x00\x04\x00\x00\x00#_S1\x1f\x94b@|\x99(B\xea\xa8A\xc0\xee\x9e\x97\xe5F\x94b@\xa8\x989\x13\x89\xa9A\xc0\x7f\xe5\xf7\xec\xef\x93b@F\xb1\xdc\xd2j\xa9A\xc0#_S1\x1f\x94b@|\x99(B\xea\xa8A\xc0",
+            4326,
         ),
         (
             "ABC123",
-            '{"type": "Polygon", "coordinates": [[[148.6378087, -35.3277268], [148.6449633, -35.3224185], [148.6454249, -35.3293424], [148.6378087, -35.3277268]]]}',
+            b"\x01\x03\x00\x00\x00\x01\x00\x00\x00\x04\x00\x00\x00Vs\xca\xedh\x94b@\xe9\x02\xa8\xf3\xf2\xa9A\xc0\xd9\x13\x13\x8a\xa3\x94b@\x0c\x90h\x02E\xa9A\xc0\xc5\xb0\x1eR\xa7\x94b@\xd4\x97J\xe4'\xaaA\xc0Vs\xca\xedh\x94b@\xe9\x02\xa8\xf3\xf2\xa9A\xc0",
+            4326,
         ),
         (
             "DEF456",
-            '{"type": "Polygon", "coordinates": [[[148.6553491, -35.3256497], [148.6631962, -35.3210338], [148.6631962, -35.3284192], [148.6553491, -35.3256497]]]}',
+            b"\x01\x03\x00\x00\x00\x01\x00\x00\x00\x04\x00\x00\x00\xd1\xfe\xac\x9e\xf8\x94b@\xe2\xb9\xad\xe3\xae\xa9A\xc0\x9b\xba<\xe78\x95b@\x8f\xf4\xb3\xa2\x17\xa9A\xc0\x9b\xba<\xe78\x95b@r\xb0\xed\xa3\t\xaaA\xc0\xd1\xfe\xac\x9e\xf8\x94b@\xe2\xb9\xad\xe3\xae\xa9A\xc0",
+            4326,
         ),
         (
             "GHI789",
-            '{"type": "Polygon", "coordinates": [[[148.6502716, -35.3060321], [148.6597343, -35.3074168], [148.6528104, -35.3143407], [148.6502716, -35.3060321]]]}',
+            b"\x01\x03\x00\x00\x00\x01\x00\x00\x00\x04\x00\x00\x00\x90\xf0b\x06\xcf\x94b@[\x83R\x0f,\xa7A\xc0\x95Q\x1b\x8b\x1c\x95b@\xd8\x1e\x07oY\xa7A\xc0\xa3\xcf\xa2\xd2\xe3\x94b@\xa0&\xe9P<\xa8A\xc0\x90\xf0b\x06\xcf\x94b@[\x83R\x0f,\xa7A\xc0",
+            4326,
         ),
     ]
 
 
 def test_generate_sql_transforms(pg_table):
     transforms = generate_sql_transforms(pg_table)
-    assert transforms == ["%s", "ST_GeomFromGeoJSON(%s)"]
+    assert transforms == ["%s", "ST_GeomFromWKB(%s, %s)"]
 
 
 def test_generate_sql_insert_row(pg_table, pg_connection):
     row_data = (
         "ABC123",
         '{"type": "Polygon", "coordinates": [[[148.6288077, -35.319649], [148.6336544, -35.3244957], [148.6230378, -35.3235725], [148.6288077, -35.319649]]]}',
+        4326,
     )
     with pg_connection.cursor() as cursor:
         sql_insert_rows = generate_sql_insert_row(pg_table, row_data, cursor)
@@ -126,7 +133,7 @@ def test_generate_sql_insert_row(pg_table, pg_connection):
         [
             SQL("("),
             SQL(
-                '\'ABC123\',ST_GeomFromGeoJSON(\'{"type": "Polygon", "coordinates": [[[148.6288077, -35.319649], [148.6336544, -35.3244957], [148.6230378, -35.3235725], [148.6288077, -35.319649]]]}\')'
+                '\'ABC123\',ST_GeomFromWKB(\'{"type": "Polygon", "coordinates": [[[148.6288077, -35.319649], [148.6336544, -35.3244957], [148.6230378, -35.3235725], [148.6288077, -35.319649]]]}\', 4326)'
             ),
             SQL(")"),
         ]
