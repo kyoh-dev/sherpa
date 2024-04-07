@@ -19,10 +19,20 @@ app.add_typer(table.app, name="table", no_args_is_help=True)
 @app.command("load", no_args_is_help=True)
 def load_file_to_pg(
     file: Annotated[Path, Argument(help="Path of the file to load", show_default=False)],
-    table: Annotated[Optional[str], Argument(help="Name of the table to load to", show_default=False)] = None,
-    schema: Annotated[str, Option("--schema", "-s", help="Schema of the table to load to")] = "public",
+    table: Annotated[
+        Optional[str], Argument(metavar="TEXT", help="Name of the table to load to", show_default=False)
+    ] = None,
+    schema: Annotated[
+        str, Option("--schema", "-s", help="Schema of the table to load to", rich_help_panel="Database Options")
+    ] = "public",
     create_table: Annotated[
-        bool, Option("--create", "-c", help="Create table by inferring the schema from the load file")
+        bool,
+        Option(
+            "--create",
+            "-c",
+            help="Create table by inferring the schema from the load file",
+            rich_help_panel="Database Options",
+        ),
     ] = False,
 ) -> None:
     """
@@ -84,5 +94,5 @@ def load_file_to_pg(
 @app.callback()
 def main() -> None:
     """
-    A CLI tool for loading GIS files to a PostGIS database
+    Load GIS files to a PostGIS database
     """
