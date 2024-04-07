@@ -8,6 +8,8 @@ on loading data to a PostGIS instance.
 
 ## Installation
 
+It is recommended to install `sherpa` in a Python virtual environment so there's no dependency conflicts.
+
 Installation requires an up-to-date version of `pip`:
 ```shell
 pip install -U pip
