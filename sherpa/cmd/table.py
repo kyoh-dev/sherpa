@@ -43,7 +43,13 @@ def get_table_shape(
     dsn_profile = read_dsn_file()
 
     client = PgClient(dsn_profile["default"])
+
+    if not client.schema_exists(schema):
+        CONSOLE.print(format_error(f"Schema not found: {format_highlight(f'{schema}')}"))
+        exit(1)
+
     table_shape = client.get_table_shape(table, schema)
+
     client.close()
 
     if not table_shape:

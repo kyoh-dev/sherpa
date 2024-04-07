@@ -46,7 +46,7 @@ def load_file_to_pg(
         exit(1)
 
     if not client.schema_exists(schema):
-        CONSOLE.print(format_error(f"Schema {format_highlight(f'{schema}')} needs to exist already"))
+        CONSOLE.print(format_error(f"Schema not found: {format_highlight(f'{schema}')}"))
         exit(1)
 
     if create_table:
