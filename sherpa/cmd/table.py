@@ -11,21 +11,25 @@ app = Typer()
 
 
 @app.command("ls")
-def list_tables(schema: Annotated[str, Argument(help="Schema of tables to target")] = "public") -> None:
+def list_tables(schema: Annotated[str, Option("--schema", "-s", help="Schema of tables to target")] = "public") -> None:
     """
-    List tables and their row counts in a specified schema
+    List tables and their row counts
     """
     dsn_profile = read_dsn_file()
 
     client = PgClient(dsn_profile["default"])
-    table_info = client.list_table_counts(schema)
-
-    if not table_info:
-        CONSOLE.print(format_error(f"No tables found in schema `{schema}`"))
-    else:
-        CONSOLE.print(table_info)
-
+    table_counts = client.list_table_counts(schema)
     client.close()
+
+    if not table_counts:
+        CONSOLE.print(format_error(f"No tables found in schema `{schema}`"))
+        exit(1)
+
+    console_table = Table("SCHEMA", "TABLE", "ROWS", style="cyan")
+    for row in table_counts:
+        console_table.add_row(row[0], row[1], str(row[2]))
+
+    CONSOLE.print(console_table)
 
 
 @app.command("shape")
@@ -34,12 +38,13 @@ def get_table_shape(
     schema: Annotated[str, Option("--schema", "-s", help="Schema of the table")] = "public",
 ) -> None:
     """
-    Get the structure of a table in a specified schema
+    Get the structure of a table
     """
     dsn_profile = read_dsn_file()
 
     client = PgClient(dsn_profile["default"])
     table_shape = client.get_table_shape(table, schema)
+    client.close()
 
     if not table_shape:
         CONSOLE.print(format_error(f"Table not found: {format_highlight(f'{schema}.{table}')}"))

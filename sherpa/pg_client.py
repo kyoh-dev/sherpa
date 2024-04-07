@@ -6,7 +6,6 @@ from typing import Any, Optional, Union
 
 import fiona
 from fiona import Collection
-from rich.table import Table
 from rich.progress import Progress
 from psycopg2 import DatabaseError, connect
 from psycopg2.sql import SQL, Identifier, Composed
@@ -46,7 +45,7 @@ class PgClient:
         self.conn.commit()
         self.conn.close()
 
-    def list_table_counts(self, schema: str = "public") -> Optional[Table]:
+    def list_table_counts(self, schema: str = "public") -> Optional[list[tuple[Union[str, int], ...]]]:
         with self.conn.cursor() as cursor:
             cursor.execute(
                 """
@@ -66,11 +65,7 @@ class PgClient:
         if len(results) == 0:
             return None
 
-        table = Table("SCHEMA", "TABLE", "ROWS", style="cyan")
-        for row in results:
-            table.add_row(row[0], row[1], str(row[2]))
-
-        return table
+        return list(results)
 
     def get_insert_table_info(self, table: str, schema: str = "public") -> Optional[PgTable]:
         with self.conn.cursor() as cursor:
