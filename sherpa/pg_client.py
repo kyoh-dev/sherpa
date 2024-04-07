@@ -12,6 +12,7 @@ from psycopg2.sql import SQL, Identifier, Composed
 from psycopg2.extensions import connection as PgConnection, cursor as PgCursor
 
 from sherpa.constants import DATA_TYPE_MAP
+from sherpa.geometry import get_collection_srid
 from sherpa.utils import format_highlight
 
 
@@ -146,9 +147,9 @@ class PgClient:
         batch_size: int = 10000,
     ) -> int:
         with fiona.open(file, mode="r") as collection:
-            # file_srid = get_collection_srid(collection)
+            file_srid = get_collection_srid(collection)
 
-            rows = list(generate_row_data(collection, table_structure))
+            rows = list(generate_row_data(collection, table_structure, file_srid))
             inserted = 0
             with Progress() as progress:
                 load_task = progress.add_task("[cyan]Loading...[/cyan]", total=len(collection))
@@ -200,16 +201,18 @@ class PgClient:
         return table_name
 
 
-def generate_row_data(collection: Collection, table_info: PgTable) -> Generator[tuple[Any, ...], None, None]:
+def generate_row_data(
+    collection: Collection, table_info: PgTable, file_srid: int
+) -> Generator[tuple[Any, ...], None, None]:
     for feature in collection:
         properties = feature["properties"]
         geometry_obj = shape(feature["geometry"])
 
-        yield tuple(properties[col] for col in table_info.columns if col != "geometry") + (geometry_obj.wkb,)
+        yield tuple(properties[col] for col in table_info.columns if col != "geometry") + (geometry_obj.wkb, file_srid)
 
 
 def generate_sql_transforms(table_info: PgTable) -> list[str]:
-    sql_transforms = ["%s" if x != "geometry" else "ST_GeomFromWKB(%s)" for x in table_info.columns]
+    sql_transforms = ["%s" if x != "geometry" else "ST_GeomFromWKB(%s, %s)" for x in table_info.columns]
     return sql_transforms
 
 
