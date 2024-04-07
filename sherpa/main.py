@@ -5,8 +5,7 @@ from typer import Typer, Argument, Option
 from psycopg2.errors import lookup
 
 from sherpa.constants import CONSOLE
-from sherpa.utils import read_dsn_file, format_success, format_error, format_info, format_highlight
-from sherpa.pg_client import PgClient, PgClientError
+from sherpa.utils import read_dsn_file, get_pg_client, format_success, format_error, format_info, format_highlight
 
 from sherpa.cmd import dsn
 from sherpa.cmd import table
@@ -39,11 +38,7 @@ def load_file_to_pg(
         CONSOLE.print(format_error("You must provide a table to load to or create one with --create/-c"))
         exit(1)
 
-    try:
-        client = PgClient(dsn_profile["default"])
-    except PgClientError as ex:
-        CONSOLE.print(format_error(str(ex)))
-        exit(1)
+    client = get_pg_client(dsn_profile["default"])
 
     if not client.schema_exists(schema):
         CONSOLE.print(format_error(f"Schema not found: {format_highlight(f'{schema}')}"))

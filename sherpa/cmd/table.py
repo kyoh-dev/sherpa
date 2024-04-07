@@ -4,8 +4,7 @@ from rich.table import Table
 from typer import Typer, Argument, Option
 
 from sherpa.constants import CONSOLE
-from sherpa.utils import read_dsn_file, format_error, format_highlight
-from sherpa.pg_client import PgClient
+from sherpa.utils import read_dsn_file, get_pg_client, format_error, format_highlight
 
 app = Typer()
 
@@ -17,7 +16,7 @@ def list_tables(schema: Annotated[str, Option("--schema", "-s", help="Schema of 
     """
     dsn_profile = read_dsn_file()
 
-    client = PgClient(dsn_profile["default"])
+    client = get_pg_client(dsn_profile["default"])
 
     if not client.schema_exists(schema):
         CONSOLE.print(format_error(f"Schema not found: {format_highlight(f'{schema}')}"))
@@ -48,7 +47,7 @@ def get_table_shape(
     """
     dsn_profile = read_dsn_file()
 
-    client = PgClient(dsn_profile["default"])
+    client = get_pg_client(dsn_profile["default"])
 
     if not client.schema_exists(schema):
         CONSOLE.print(format_error(f"Schema not found: {format_highlight(f'{schema}')}"))
