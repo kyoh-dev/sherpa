@@ -8,7 +8,15 @@ on loading data to a PostGIS instance.
 
 ## Installation
 
-TBC
+Installation requires an up-to-date version of `pip`:
+```shell
+pip install -U pip
+```
+
+For a regular, non-development install:
+```shell
+pip install git+https://github.com/kyoh-dev/sherpa.git#egg=sherpa
+```
 
 ## Usage
 
@@ -25,7 +33,3 @@ $ sherpa
 │ tables             Get info about tables in your PostGIS instance   │
 ╰─────────────────────────────────────────────────────────────────────╯
 ```
-
-## Development
-
-TBC
