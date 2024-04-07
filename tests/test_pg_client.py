@@ -1,9 +1,9 @@
 import pytest
 import fiona
 from psycopg2.sql import SQL, Identifier, Composed
-from rich.table import Table
 
 from sherpa.pg_client import PgTable, generate_row_data, generate_sql_insert_row, generate_sql_transforms
+
 from tests.constants import TEST_TABLE
 
 
@@ -12,22 +12,7 @@ def pg_table(dsn_profile):
     yield PgTable("public", TEST_TABLE, ["polygon_id", "geometry"])
 
 
-@pytest.fixture
-def rich_table():
-    table = Table("SCHEMA", "TABLE", "ROWS")
-    yield table
-
-
-def test_list_table_counts_no_data(pg_client, rich_table):
-    table = pg_client.list_table_counts()
-    rich_table.add_row("public", TEST_TABLE, "0")
-
-    assert table.row_count == rich_table.row_count
-    assert table.columns == rich_table.columns
-    assert table.rows == rich_table.rows
-
-
-def test_get_table_structure(pg_client):
+def test_get_insert_table_info(pg_client):
     table = pg_client.get_insert_table_info(TEST_TABLE)
     assert table.table == TEST_TABLE
     assert table.columns == ["polygon_id", "geometry"]
@@ -83,7 +68,7 @@ def test_load_success(request, pg_client, pg_connection, pg_table, file):
 
 
 def test_create_table_from_file_success(pg_client, pg_connection, geojson_file):
-    pg_client.create_table_from_file(geojson_file, "generic")
+    pg_client.create_table(geojson_file, "generic", "test_geojson_file")
     with pg_connection.cursor() as cursor:
         cursor.execute(
             SQL(

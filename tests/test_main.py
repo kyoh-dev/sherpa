@@ -69,5 +69,6 @@ def test_cmd_load_create_table(runner, geojson_file, pg_connection):
 
 def test_cmd_load_no_table_input(runner, geojson_file):
     result = runner.invoke(main.app, ["load", str(geojson_file)])
-    assert result.exit_code == 2
-    assert "Missing argument 'TABLE'" in result.stdout
+    print(result.stdout)
+    assert result.exit_code == 1
+    assert "sherpa: You must provide a table to load to or create one with --create/-c" in result.stdout

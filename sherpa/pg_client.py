@@ -174,11 +174,10 @@ class PgClient:
 
             return inserted
 
-    def create_table_from_file(self, file: Path, schema: str) -> str:
+    def create_table(self, file: Path, schema: str, table_name: str) -> str:
         with fiona.open(file, mode="r") as collection:
             file_schema = collection.schema["properties"]
 
-        table_name = file.name.removesuffix(file.suffix)
         columns = list(file_schema.items())
         fields = [SQL("{} {}").format(Identifier(col[0]), SQL(DATA_TYPE_MAP[col[1]])) for col in columns]
         q = SQL(
