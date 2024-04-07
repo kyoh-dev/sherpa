@@ -64,7 +64,10 @@ def get_table_shape(
 
     console_table = Table("COLUMN", "TYPE", "SRID", style="cyan")
     for row in table_shape:
-        console_table.add_row(row[0], row[1] or row[2], str(row[3]))
+        column_type = row[1] or row[2]
+        srid = "" if row[3] is None else str(row[3])
+
+        console_table.add_row(row[0], column_type.upper(), srid)
 
     CONSOLE.print(console_table)
 
