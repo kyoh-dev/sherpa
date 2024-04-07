@@ -5,7 +5,8 @@ from typer import Typer, Argument, Option
 from psycopg2.errors import lookup
 
 from sherpa.constants import CONSOLE
-from sherpa.utils import read_dsn_file, get_pg_client, format_success, format_error, format_info, format_highlight
+from sherpa.utils import read_dsn_file, format_success, format_error, format_warning, format_highlight
+from sherpa.database import get_pg_client
 
 from sherpa.cmd import dsn
 from sherpa.cmd import table
@@ -48,7 +49,7 @@ def load_file_to_pg(
         if table_name is None:
             create_table_name = file.name.removesuffix(file.suffix)
             CONSOLE.print(
-                format_info(f"Table name not provided, using file name `{format_highlight(create_table_name)}`")
+                format_warning(f"Table name not provided, using file name {format_highlight(create_table_name)}")
             )
         else:
             create_table_name = table_name

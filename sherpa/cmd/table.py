@@ -4,7 +4,8 @@ from rich.table import Table
 from typer import Typer, Argument, Option
 
 from sherpa.constants import CONSOLE
-from sherpa.utils import read_dsn_file, get_pg_client, format_error, format_highlight
+from sherpa.utils import read_dsn_file, format_error, format_highlight
+from sherpa.database import get_pg_client
 
 app = Typer()
 

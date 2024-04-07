@@ -12,6 +12,7 @@ from psycopg2.sql import SQL, Identifier, Composed
 from psycopg2.extensions import connection as PgConnection, cursor as PgCursor
 
 from sherpa.constants import DATA_TYPE_MAP
+from sherpa.utils import format_highlight
 
 
 class PgClientError(Exception):
@@ -39,7 +40,7 @@ class PgClient:
         try:
             self.conn = connect(**connection_details)
         except DatabaseError:
-            raise PgClientError(f"Unable to connect to database `{connection_details['dbname']}`")
+            raise PgClientError(f"Unable to connect to database {format_highlight(connection_details['dbname'])}")
 
     def close(self) -> None:
         self.conn.commit()
@@ -177,6 +178,7 @@ class PgClient:
     def create_table(self, file: Path, schema: str, table_name: str) -> str:
         with fiona.open(file, mode="r") as collection:
             file_schema = collection.schema["properties"]
+            # srid = get_srid(collection)
 
         columns = list(file_schema.items())
         fields = [SQL("{} {}").format(Identifier(col[0]), SQL(DATA_TYPE_MAP[col[1]])) for col in columns]
@@ -186,7 +188,7 @@ class PgClient:
                 id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
                 {},
                 geometry GEOMETRY
-            )
+            );
             """,
         ).format(Identifier(schema, table_name), SQL(",").join(fields))
 

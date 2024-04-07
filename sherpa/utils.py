@@ -1,9 +1,6 @@
-from typing import Optional
-
 from tomlkit.toml_document import TOMLDocument
 
 from sherpa.constants import DSN_FILE, CONSOLE
-from sherpa.pg_client import PgClient, PgClientError
 
 
 def format_error(msg: str) -> str:
@@ -18,8 +15,12 @@ def format_info(msg: str) -> str:
     return f"[bold dodger_blue1]sherpa:[/bold dodger_blue1] {msg}"
 
 
+def format_warning(msg: str) -> str:
+    return f"[bold yellow1]sherpa:[/bold yellow1] {msg}"
+
+
 def format_highlight(word: str) -> str:
-    return f"[yellow1]{word}[/yellow1]"
+    return f"[medium_purple2]{word}[/medium_purple2]"
 
 
 def read_dsn_file() -> TOMLDocument:
@@ -30,13 +31,3 @@ def read_dsn_file() -> TOMLDocument:
         exit(0)
     else:
         return dsn_profile
-
-
-def get_pg_client(dsn_profile: dict[str, str]) -> Optional[PgClient]:
-    try:
-        client = PgClient(dsn_profile)
-    except PgClientError as ex:
-        CONSOLE.print(format_error(str(ex)))
-        exit(1)
-    else:
-        return client
