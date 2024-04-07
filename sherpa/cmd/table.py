@@ -18,11 +18,17 @@ def list_tables(schema: Annotated[str, Option("--schema", "-s", help="Schema of 
     dsn_profile = read_dsn_file()
 
     client = PgClient(dsn_profile["default"])
+
+    if not client.schema_exists(schema):
+        CONSOLE.print(format_error(f"Schema not found: {format_highlight(f'{schema}')}"))
+        exit(1)
+
     table_counts = client.list_table_counts(schema)
+
     client.close()
 
     if not table_counts:
-        CONSOLE.print(format_error(f"No tables found in schema `{schema}`"))
+        CONSOLE.print(format_error(f"No tables found in schema {format_highlight(f'{schema}')}"))
         exit(1)
 
     console_table = Table("SCHEMA", "TABLE", "ROWS", style="cyan")
