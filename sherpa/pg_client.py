@@ -2,7 +2,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 from collections.abc import Generator
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 import fiona
 from fiona import Collection
@@ -72,7 +72,7 @@ class PgClient:
 
         return table
 
-    def get_table_structure(self, table: str, schema: str = "public") -> Optional[PgTable]:
+    def get_insert_table_info(self, table: str, schema: str = "public") -> Optional[PgTable]:
         with self.conn.cursor() as cursor:
             cursor.execute(
                 """
@@ -90,6 +90,44 @@ class PgClient:
             return None
 
         return PgTable(schema=schema, table=table, columns=[result for (result,) in results])
+
+    def get_table_shape(self, table: str, schema: str = "public") -> Optional[list[tuple[Union[str, int], ...]]]:
+        with self.conn.cursor() as cursor:
+            # NB: This can probably be optimised, 2 sub-queries is not ideal
+            cursor.execute(
+                """
+                SELECT
+                    info_schema.column_name,
+                    CASE
+                        WHEN info_schema.data_type = 'USER-DEFINED' THEN NULL
+                        ELSE info_schema.data_type
+                    END AS data_type,
+                    (
+                        SELECT geometry.type
+                        FROM geometry_columns AS geometry
+                        WHERE info_schema.table_schema = geometry.f_table_schema
+                            AND info_schema.table_name = geometry.f_table_name
+                            AND (info_schema.udt_name = 'geometry' OR info_schema.udt_name = 'geography')
+                    ) AS geometry_type,
+                    (
+                        SELECT geometry.srid
+                        FROM geometry_columns AS geometry
+                        WHERE info_schema.table_schema = geometry.f_table_schema
+                            AND info_schema.table_name = geometry.f_table_name
+                            AND (info_schema.udt_name = 'geometry' OR info_schema.udt_name = 'geography')
+                    ) AS srid
+                FROM information_schema.columns AS info_schema
+                WHERE info_schema.table_schema = %s
+                    AND info_schema.table_name = %s;
+                """,
+                (schema, table),
+            )
+            results = cursor.fetchall()
+
+        if len(results) == 0:
+            return None
+
+        return list(results)
 
     def schema_exists(self, schema: str) -> bool:
         with self.conn.cursor() as cursor:

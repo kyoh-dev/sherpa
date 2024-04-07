@@ -9,11 +9,11 @@ from sherpa.utils import read_dsn_file, format_success, format_error, format_hig
 from sherpa.pg_client import PgClient, PgClientError
 
 from sherpa.cmd import dsn
-from sherpa.cmd import tables
+from sherpa.cmd import table
 
 app = Typer(name="sherpa", no_args_is_help=True)
 app.add_typer(dsn.app, name="dsn", no_args_is_help=True)
-app.add_typer(tables.app, name="tables", no_args_is_help=True)
+app.add_typer(table.app, name="table", no_args_is_help=True)
 
 
 @app.command("load", no_args_is_help=True)
@@ -61,7 +61,7 @@ def load_file_to_pg(
             )
             exit(1)
 
-    table_structure = client.get_table_structure(table, schema)
+    table_structure = client.get_insert_table_info(table, schema)
     if not table_structure:
         CONSOLE.print(format_error(f"Table not found: {format_highlight(f'{schema}.{table}')}"))
         exit(1)
