@@ -12,7 +12,7 @@ app = Typer()
 @app.command("ls")
 def list_tables(schema: Annotated[str, Argument(help="Schema of tables to target")] = "public") -> None:
     """
-    List tables and their row counts in a specified schema (default: public)
+    List tables and their row counts in a specified schema
     """
     dsn_profile = read_dsn_file()
 

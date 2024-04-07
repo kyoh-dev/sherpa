@@ -18,8 +18,8 @@ app.add_typer(tables.app, name="tables", no_args_is_help=True)
 
 @app.command("load", no_args_is_help=True)
 def load_file_to_pg(
-    file: Annotated[Path, Argument(help="Path of the file to load")],
-    table: Annotated[str, Argument(help="Name of the table to load to")],
+    file: Annotated[Path, Argument(help="Path of the file to load", show_default=False)],
+    table: Annotated[str, Argument(help="Name of the table to load to", show_default=False)],
     schema: Annotated[str, Option("--schema", "-s", help="Schema of the table to load to")] = "public",
     create_table: Annotated[
         bool, Option("--create", "-c", help="Create table by inferring the schema from the load file")
@@ -27,8 +27,6 @@ def load_file_to_pg(
 ) -> None:
     """
     Load a file to a PostGIS table
-
-    You can either specify an existing table to load to with --table/-t, or create one on the fly with --create/-c
     """
     dsn_profile = read_dsn_file()
 
