@@ -16,11 +16,11 @@ app.add_typer(dsn.app, name="dsn", no_args_is_help=True)
 app.add_typer(tables.app, name="tables", no_args_is_help=True)
 
 
-@app.command("load")
+@app.command("load", no_args_is_help=True)
 def load_file_to_pg(
     file: Annotated[Path, Argument(help="Path of the file to load")],
-    table_name: Annotated[str, Option("--table", "-t", help="Name of the table to load to")] = None,
-    schema_name: Annotated[str, Option("--schema", "-s", help="Schema of the table to load to")] = "public",
+    table: Annotated[str, Argument(help="Name of the table to load to")],
+    schema: Annotated[str, Option("--schema", "-s", help="Schema of the table to load to")] = "public",
     create_table: Annotated[
         bool, Option("--create", "-c", help="Create table by inferring the schema from the load file")
     ] = False,
@@ -28,7 +28,7 @@ def load_file_to_pg(
     """
     Load a file to a PostGIS table
 
-    You can either specify an existing table to load to, or create one on the fly
+    You can either specify an existing table to load to with --table/-t, or create one on the fly with --create/-c
     """
     dsn_profile = read_dsn_file()
 
@@ -36,7 +36,7 @@ def load_file_to_pg(
         CONSOLE.print(format_error(f"File not found: {file}"))
         exit(1)
 
-    if not table_name and create_table is False:
+    if not table and create_table is False:
         CONSOLE.print(format_error("You must either provide a table with --table/-t or the --create/-c option"))
         exit(1)
 
@@ -46,36 +46,34 @@ def load_file_to_pg(
         CONSOLE.print(format_error(str(ex)))
         exit(1)
 
-    if not client.schema_exists(schema_name):
-        CONSOLE.print(format_error(f"Schema {format_highlight(f'{schema_name}')} needs to exist already"))
+    if not client.schema_exists(schema):
+        CONSOLE.print(format_error(f"Schema {format_highlight(f'{schema}')} needs to exist already"))
         exit(1)
 
     if create_table:
         try:
-            table_name = client.create_table_from_file(file, schema_name)
-            CONSOLE.print(format_success(f"Created table {format_highlight(f'{schema_name}.{table_name}')}"))
+            table = client.create_table_from_file(file, schema)
+            CONSOLE.print(format_success(f"Created table {format_highlight(f'{schema}.{table}')}"))
         except lookup("42P07"):
             # Catch DuplicateTable errors
             CONSOLE.print(
                 format_error(
-                    f"Table {format_highlight(f'{schema_name}.{file.name.removesuffix(file.suffix)}')} already exists, use the --table/-t option instead"
+                    f"Table {format_highlight(f'{schema}.{file.name.removesuffix(file.suffix)}')} already exists, use the --table/-t option instead"
                 )
             )
             exit(1)
 
-    table_info = client.get_table_structure(table_name, schema_name)
-    if not table_info:
-        CONSOLE.print(
-            format_error(f"Unable to get table structure for {format_highlight(f'{schema_name}.{table_name}')}")
-        )
+    table_structure = client.get_table_structure(table, schema)
+    if not table_structure:
+        CONSOLE.print(format_error(f"Table not found: {format_highlight(f'{schema}.{table}')}"))
         exit(1)
 
-    rows_inserted = client.load(file, table_info)
+    rows_inserted = client.load(file, table_structure)
     client.close()
 
     CONSOLE.print(
         format_success(
-            f"Loaded {rows_inserted} records to {format_highlight(f'{table_info.schema}.{table_info.table}')}"
+            f"Loaded {rows_inserted} records to {format_highlight(f'{table_structure.schema}.{table_structure.table}')}"
         )
     )
 

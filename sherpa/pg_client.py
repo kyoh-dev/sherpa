@@ -108,11 +108,11 @@ class PgClient:
     def load(
         self,
         file: Path,
-        table_info: PgTable,
+        table_structure: PgTable,
         batch_size: int = 10000,
     ) -> int:
         with fiona.open(file, mode="r") as collection:
-            rows = list(generate_row_data(collection, table_info))
+            rows = list(generate_row_data(collection, table_structure))
             inserted = 0
             with Progress() as progress:
                 load_task = progress.add_task("[cyan]Loading...[/cyan]", total=len(collection))
@@ -122,7 +122,7 @@ class PgClient:
                     batch = rows[inserted : batch_size + inserted]
                     if batch:
                         insert_cursor = self.conn.cursor()
-                        args_list = [generate_sql_insert_row(table_info, x, insert_cursor) for x in batch]
+                        args_list = [generate_sql_insert_row(table_structure, x, insert_cursor) for x in batch]
                         statement = SQL(
                             """
                             INSERT INTO {}({})
@@ -130,8 +130,8 @@ class PgClient:
                             RETURNING id;
                             """
                         ).format(
-                            Identifier(table_info.schema, table_info.table),
-                            table_info.sql_composed_columns,
+                            Identifier(table_structure.schema, table_structure.table),
+                            table_structure.sql_composed_columns,
                             SQL(",").join(args_list),
                         )
                         insert_cursor.execute(statement)

@@ -14,26 +14,26 @@ def runner(monkeypatch, dsn_profile, pg_client):
 
 
 def test_cmd_load_success(runner, geojson_file):
-    result = runner.invoke(main.app, ["load", "--table", TEST_TABLE, str(geojson_file)])
+    result = runner.invoke(main.app, ["load", str(geojson_file), TEST_TABLE])
     assert result.exit_code == 0
     assert f"sherpa: Loaded 4 records to public.{TEST_TABLE}" in result.stdout
 
 
 def test_cmd_load_file_not_found(runner):
     filepath = Path("test_file.geojson")
-    result = runner.invoke(main.app, ["load", "--table", TEST_TABLE, str(filepath)])
+    result = runner.invoke(main.app, ["load", str(filepath), TEST_TABLE])
     assert result.exit_code == 1
     assert "sherpa: File not found: test_file.geojson" in result.stdout
 
 
-def test_cmd_load_unknown_table(runner, geojson_file):
-    result = runner.invoke(main.app, ["load", "--table", "monkeys_in_space", str(geojson_file)])
+def test_cmd_load_table_not_found(runner, geojson_file):
+    result = runner.invoke(main.app, ["load", str(geojson_file), "monkeys_in_space"])
     assert result.exit_code == 1
-    assert "sherpa: Unable to get table structure for public.monkeys_in_space" in result.stdout
+    assert "sherpa: Table not found: public.monkeys_in_space" in result.stdout
 
 
 def test_cmd_load_create_table(runner, geojson_file, pg_connection):
-    result = runner.invoke(main.app, ["load", "--create", str(geojson_file)])
+    result = runner.invoke(main.app, ["load", "--create", str(geojson_file), "test_geojson_file"])
     assert result.exit_code == 0
 
     with pg_connection.cursor() as cursor:
@@ -69,5 +69,5 @@ def test_cmd_load_create_table(runner, geojson_file, pg_connection):
 
 def test_cmd_load_no_table_input(runner, geojson_file):
     result = runner.invoke(main.app, ["load", str(geojson_file)])
-    assert result.exit_code == 1
-    assert "sherpa: You must either provide a table with --table/-t or the --create/-c \noption" in result.stdout
+    assert result.exit_code == 2
+    assert "Missing argument 'TABLE'" in result.stdout
