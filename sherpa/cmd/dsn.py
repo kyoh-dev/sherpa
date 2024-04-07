@@ -49,8 +49,8 @@ def add_dsn_profile() -> None:
 
 @app.command("set")
 def set_dsn_profile_value(
-    key: Annotated[str, Argument(help=f"Update one of {DSN_KEYS}")],
-    value: Annotated[str, Argument(help="Value to set the key to")],
+    key: Annotated[str, Argument(help=f"Update one of {DSN_KEYS}", show_default=False)],
+    value: Annotated[str, Argument(help="Value to set the key to", show_default=False)],
 ) -> None:
     """
     Set a value for a key in your DSN profile
