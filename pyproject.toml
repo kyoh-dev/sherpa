@@ -16,6 +16,7 @@ rich = "^13.7.1"
 psycopg2-binary = "^2.9.9"
 fiona = "^1.9.6"
 tomlkit = "^0.12.4"
+shapely = "^2.0.3"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.9.0"

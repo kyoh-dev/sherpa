@@ -34,6 +34,10 @@ def load_file_to_pg(
             rich_help_panel="Database Options",
         ),
     ] = False,
+    srid: Annotated[
+        Optional[int],
+        Option("--srid", "-i", help="Force geometries to an SRID on load", rich_help_panel="Geometry Options"),
+    ] = None,
 ) -> None:
     """
     Load a file to a PostGIS table

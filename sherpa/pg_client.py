@@ -1,4 +1,3 @@
-import json
 from dataclasses import dataclass
 from pathlib import Path
 from collections.abc import Generator
@@ -6,6 +5,7 @@ from typing import Any, Optional, Union
 
 import fiona
 from fiona import Collection
+from shapely.geometry import shape
 from rich.progress import Progress
 from psycopg2 import DatabaseError, connect
 from psycopg2.sql import SQL, Identifier, Composed
@@ -146,13 +146,14 @@ class PgClient:
         batch_size: int = 10000,
     ) -> int:
         with fiona.open(file, mode="r") as collection:
+            # file_srid = get_collection_srid(collection)
+
             rows = list(generate_row_data(collection, table_structure))
             inserted = 0
             with Progress() as progress:
                 load_task = progress.add_task("[cyan]Loading...[/cyan]", total=len(collection))
                 while not progress.finished:
-                    # NB: If this gets to be a problem with large files
-                    # go back to using islice iterator
+                    # NB: If this gets to be a problem with large files, go back to using an iterator (islice)
                     batch = rows[inserted : batch_size + inserted]
                     if batch:
                         insert_cursor = self.conn.cursor()
@@ -200,18 +201,15 @@ class PgClient:
 
 
 def generate_row_data(collection: Collection, table_info: PgTable) -> Generator[tuple[Any, ...], None, None]:
-    for record in collection:
-        properties = record["properties"]
-        geometry = {
-            "type": record["geometry"]["type"],
-            "coordinates": record["geometry"]["coordinates"],
-        }
+    for feature in collection:
+        properties = feature["properties"]
+        geometry_obj = shape(feature["geometry"])
 
-        yield tuple(properties[col] for col in table_info.columns if col != "geometry") + (json.dumps(geometry),)
+        yield tuple(properties[col] for col in table_info.columns if col != "geometry") + (geometry_obj.wkb,)
 
 
 def generate_sql_transforms(table_info: PgTable) -> list[str]:
-    sql_transforms = ["%s" if x != "geometry" else "ST_GeomFromGeoJSON(%s)" for x in table_info.columns]
+    sql_transforms = ["%s" if x != "geometry" else "ST_GeomFromWKB(%s)" for x in table_info.columns]
     return sql_transforms
 
 
