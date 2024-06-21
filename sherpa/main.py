@@ -3,6 +3,7 @@ from typing import Annotated, Optional
 
 from typer import Typer, Argument, Option
 from psycopg2.errors import lookup
+from fiona.crs import CRS, CRSError
 
 from sherpa.constants import CONSOLE
 from sherpa.utils import read_dsn_file, format_success, format_error, format_warning, format_highlight
@@ -36,7 +37,12 @@ def load_file_to_pg(
     ] = False,
     srid: Annotated[
         Optional[int],
-        Option("--srid", "-i", help="Force geometries to an SRID on load", rich_help_panel="Geometry Options"),
+        Option(
+            "--srid",
+            "-i",
+            help="Force geometries to an SRID on load (only supports EPSG codes)",
+            rich_help_panel="Geometry Options",
+        ),
     ] = None,
 ) -> None:
     """
@@ -52,6 +58,16 @@ def load_file_to_pg(
     if not table_name and create_table is False:
         CONSOLE.print(format_error("You must provide a table to load to or create one with --create/-c"))
         exit(1)
+
+    if srid is not None:
+        try:
+            crs = CRS.from_epsg(srid)
+        except CRSError as ex:
+            CONSOLE.print(format_error(str(ex)))
+            exit(1)
+        else:
+            srid = crs.to_epsg()
+            CONSOLE.print(format_warning(f"Forcing geometries to EPSG:{srid}"), highlight=False)
 
     client = get_pg_client(dsn_profile["default"])
 
@@ -85,7 +101,7 @@ def load_file_to_pg(
         CONSOLE.print(format_error(f"Table not found: {format_highlight(f'{schema}.{table_name}')}"))
         exit(1)
 
-    rows_inserted = client.load(file, table_structure)
+    rows_inserted = client.load(file, table_structure, force_srid=srid)
     client.close()
 
     CONSOLE.print(

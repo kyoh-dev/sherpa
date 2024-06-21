@@ -144,12 +144,11 @@ class PgClient:
         self,
         file: Path,
         table_structure: PgTable,
+        force_srid: Optional[int] = None,
         batch_size: int = 10000,
     ) -> int:
         with fiona.open(file, mode="r") as collection:
-            file_srid = get_collection_srid(collection)
-
-            rows = list(generate_row_data(collection, table_structure, file_srid))
+            rows = list(generate_row_data(collection, table_structure, force_srid))
             inserted = 0
             with Progress() as progress:
                 load_task = progress.add_task("[cyan]Loading...[/cyan]", total=len(collection))
@@ -158,7 +157,9 @@ class PgClient:
                     batch = rows[inserted : batch_size + inserted]
                     if batch:
                         insert_cursor = self.conn.cursor()
-                        args_list = [generate_sql_insert_row(table_structure, x, insert_cursor) for x in batch]
+                        args_list = [
+                            generate_sql_insert_row(table_structure, x, insert_cursor, force_srid) for x in batch
+                        ]
                         statement = SQL(
                             """
                             INSERT INTO {}({})
@@ -180,7 +181,6 @@ class PgClient:
     def create_table(self, file: Path, schema: str, table_name: str) -> str:
         with fiona.open(file, mode="r") as collection:
             file_schema = collection.schema["properties"]
-            # srid = get_srid(collection)
 
         columns = list(file_schema.items())
         fields = [SQL("{} {}").format(Identifier(col[0]), SQL(DATA_TYPE_MAP[col[1]])) for col in columns]
@@ -202,21 +202,38 @@ class PgClient:
 
 
 def generate_row_data(
-    collection: Collection, table_info: PgTable, file_srid: int
+    collection: Collection, table_info: PgTable, force_srid: Optional[int] = None
 ) -> Generator[tuple[Any, ...], None, None]:
+    file_srid = get_collection_srid(collection)
+
     for feature in collection:
         properties = feature["properties"]
         geometry_obj = shape(feature["geometry"])
 
-        yield tuple(properties[col] for col in table_info.columns if col != "geometry") + (geometry_obj.wkb, file_srid)
+        if force_srid is not None:
+            geometry_attributes = (geometry_obj.wkb, file_srid, force_srid)
+        else:
+            geometry_attributes = (geometry_obj.wkb, file_srid)
+
+        yield tuple(properties[col] for col in table_info.columns if col != "geometry") + geometry_attributes
 
 
-def generate_sql_transforms(table_info: PgTable) -> list[str]:
-    sql_transforms = ["%s" if x != "geometry" else "ST_GeomFromWKB(%s, %s)" for x in table_info.columns]
+def generate_sql_transforms(table_info: PgTable, force_srid: Optional[int] = None) -> list[str]:
+    sql_transforms = []
+    for x in table_info.columns:
+        if x != "geometry":
+            sql_transforms.append("%s")
+        elif force_srid:
+            sql_transforms.append("ST_Transform(ST_GeomFromWKB(%s, %s), %s)")
+        else:
+            sql_transforms.append("ST_GeomFromWKB(%s, %s)")
+
     return sql_transforms
 
 
-def generate_sql_insert_row(table_info: PgTable, row_data: tuple[Any, ...], cursor: PgCursor) -> Composed:
+def generate_sql_insert_row(
+    table_info: PgTable, row_data: tuple[Any, ...], cursor: PgCursor, force_srid: Optional[int] = None
+) -> Composed:
     return SQL("({})").format(
-        SQL(cursor.mogrify(",".join(generate_sql_transforms(table_info)), row_data).decode("utf-8"))
+        SQL(cursor.mogrify(",".join(generate_sql_transforms(table_info, force_srid)), row_data).decode("utf-8"))
     )

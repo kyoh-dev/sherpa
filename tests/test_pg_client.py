@@ -3,7 +3,6 @@ import fiona
 from psycopg2.sql import SQL, Identifier, Composed
 
 from sherpa.pg_client import PgTable, generate_row_data, generate_sql_insert_row, generate_sql_transforms
-from sherpa.geometry import get_collection_srid
 
 from tests.constants import TEST_TABLE
 
@@ -34,7 +33,7 @@ def test_schema_exists(pg_client, schema, expected_result):
 
 @pytest.mark.parametrize("file", [pytest.param("geojson_file", id="geojson"), pytest.param("gpkg_file", id="gpkg")])
 def test_load_success(request, pg_client, pg_connection, pg_table, file):
-    pg_client.load(request.getfixturevalue(file), pg_table)
+    pg_client.load(request.getfixturevalue(file), pg_table, force_srid=4326)
     with pg_connection.cursor() as cursor:
         cursor.execute(
             SQL(
@@ -88,28 +87,31 @@ def test_create_table_from_file_success(pg_client, pg_connection, geojson_file):
 
 def test_generate_row_data(geojson_file, pg_table):
     with fiona.open(geojson_file) as collection:
-        srid = get_collection_srid(collection)
-        rows = list(generate_row_data(collection, pg_table, srid))
+        rows = list(generate_row_data(collection, pg_table, force_srid=4326))
 
     assert rows == [
         (
             "ABC123",
             b"\x01\x03\x00\x00\x00\x01\x00\x00\x00\x04\x00\x00\x00#_S1\x1f\x94b@|\x99(B\xea\xa8A\xc0\xee\x9e\x97\xe5F\x94b@\xa8\x989\x13\x89\xa9A\xc0\x7f\xe5\xf7\xec\xef\x93b@F\xb1\xdc\xd2j\xa9A\xc0#_S1\x1f\x94b@|\x99(B\xea\xa8A\xc0",
+            4283,
             4326,
         ),
         (
             "ABC123",
             b"\x01\x03\x00\x00\x00\x01\x00\x00\x00\x04\x00\x00\x00Vs\xca\xedh\x94b@\xe9\x02\xa8\xf3\xf2\xa9A\xc0\xd9\x13\x13\x8a\xa3\x94b@\x0c\x90h\x02E\xa9A\xc0\xc5\xb0\x1eR\xa7\x94b@\xd4\x97J\xe4'\xaaA\xc0Vs\xca\xedh\x94b@\xe9\x02\xa8\xf3\xf2\xa9A\xc0",
+            4283,
             4326,
         ),
         (
             "DEF456",
             b"\x01\x03\x00\x00\x00\x01\x00\x00\x00\x04\x00\x00\x00\xd1\xfe\xac\x9e\xf8\x94b@\xe2\xb9\xad\xe3\xae\xa9A\xc0\x9b\xba<\xe78\x95b@\x8f\xf4\xb3\xa2\x17\xa9A\xc0\x9b\xba<\xe78\x95b@r\xb0\xed\xa3\t\xaaA\xc0\xd1\xfe\xac\x9e\xf8\x94b@\xe2\xb9\xad\xe3\xae\xa9A\xc0",
+            4283,
             4326,
         ),
         (
             "GHI789",
             b"\x01\x03\x00\x00\x00\x01\x00\x00\x00\x04\x00\x00\x00\x90\xf0b\x06\xcf\x94b@[\x83R\x0f,\xa7A\xc0\x95Q\x1b\x8b\x1c\x95b@\xd8\x1e\x07oY\xa7A\xc0\xa3\xcf\xa2\xd2\xe3\x94b@\xa0&\xe9P<\xa8A\xc0\x90\xf0b\x06\xcf\x94b@[\x83R\x0f,\xa7A\xc0",
+            4283,
             4326,
         ),
     ]

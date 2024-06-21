@@ -153,7 +153,7 @@ def geometry_records():
 def geojson_file(tmp_path, geometry_records):
     f = tmp_path / "test_geojson_file.geojson"
     schema = {"geometry": "Polygon", "properties": {"polygon_id": "str"}}
-    with fiona.open(f, "w", schema=schema, driver="GeoJSON", crs="EPSG:4326") as collection:
+    with fiona.open(f, "w", schema=schema, driver="GeoJSON", crs="EPSG:4283") as collection:
         collection.writerecords(geometry_records)
     yield f
 
