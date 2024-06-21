@@ -34,7 +34,9 @@ jobs:
         run: poetry install --no-interaction --no-root
 
       - name: Setup test DSN profile
-        run: echo "[default]\nuser = \"test\"\npassword = \"test\"\ndbname = \"sherpa-test\"\nhost = \"localhost\"\nport = \"27901\"" > ~/.sherpa/dsn.toml
+        run: |
+          mkdir -p ~/.sherpa
+          echo "[default]\nuser = \"test\"\npassword = \"test\"\ndbname = \"sherpa-test\"\nhost = \"localhost\"\nport = \"27901\"" > ~/.sherpa/dsn.toml
 
       - name: Run unit tests
         run: |
